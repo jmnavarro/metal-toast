@@ -10,8 +10,13 @@
 </head>
 <body>
 	<h1>Snackbar</h1>
-	<script type="text/javascript">
-		new metal.Snackbar();
+	<script>
+		window.snackbar = new metal.Snackbar({
+			visible: true,
+			body: 'Danger',
+			elementClasses: 'alert-danger',
+			dismissible: true
+		});
 	</script>
 </body>
 </html>
