@@ -4,7 +4,9 @@
 	<meta charset="UTF-8">
 	<title>Demo: Toast</title>
 
-	<link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.css">
+	<link rel="stylesheet" href="../node_modules/westyle/build/bootstrap.css">
+	<link rel="stylesheet" href="../node_modules/westyle/build/fonts/icon-12.css">
+	<link rel="stylesheet" href="../node_modules/westyle/build/fonts/icon-16.css">
 
 	<script src="../build/globals/toast.js"></script>
 </head>
@@ -13,9 +15,11 @@
 	<script>
 		window.toast = new metal.Toast({
 			visible: true,
-			body: 'Danger',
-			elementClasses: 'alert-danger',
-			dismissible: true
+			body: 'User was deleted successfully',
+			elementClasses: 'toast--success',
+			dismissible: true,
+			spinner: true,
+			spinnerDone: true
 		});
 	</script>
 </body>
