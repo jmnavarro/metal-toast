@@ -1,6 +1,6 @@
-# metal-snackbar
+# metal-toast
 
-Metal.js Snackbar component
+Metal.js Toast component
 
 ## Setup
 

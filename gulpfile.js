@@ -3,6 +3,6 @@
 var metal = require('gulp-metal');
 
 metal.registerTasks({
-	bundleFileName: 'snackbar.js',
-	moduleName: 'metal-snackbar'
+	bundleFileName: 'toast.js',
+	moduleName: 'metal-toast'
 });

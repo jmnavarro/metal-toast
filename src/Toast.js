@@ -1,12 +1,12 @@
 'use strict';
 
-import templates from './Snackbar.soy';
+import templates from './Toast.soy';
 import Soy from 'metal-soy';
 import Alert from 'metal-alert';
 
-class Snackbar extends Alert {}
+class Toast extends Alert {}
 
-Snackbar.STATE = {
+Toast.STATE = {
 	/**
 	 * Spinner indicating.
 	 * @type {boolean}
@@ -33,6 +33,6 @@ Snackbar.STATE = {
 	}
 };
 
-Soy.register(Snackbar, templates);
+Soy.register(Toast, templates);
 
-export default Snackbar;
+export default Toast;

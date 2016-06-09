@@ -1,11 +1,11 @@
 'use strict';
 
 import dom from 'metal-dom';
-import Snackbar from '../src/Snackbar';
+import Toast from '../src/Toast';
 
-describe('Snackbar', function() {
+describe('Toast', function() {
 	it('should update spinner as done', function(done) {
-		var component = new Snackbar({
+		var component = new Toast({
 			spinner: true,
 			spinnerDone: false
 		});
