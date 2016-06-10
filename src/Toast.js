@@ -8,12 +8,26 @@ class Toast extends Alert {}
 
 Toast.STATE = {
 	/**
+	 * Overrides `metal-alert` default values.
+	 */
+	animClasses: {
+		value: {
+			show: 'animated slideInLeft',
+			hide: 'animated slideOutLeft'
+		}
+	},
+
+	visible: {
+		value: true
+	},
+
+	/**
 	 * Spinner indicating.
 	 * @type {boolean}
 	 * @default false
 	 */
 	spinner: {
-		value: false
+		value: true
 	},
 
 	/**

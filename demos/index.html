@@ -14,16 +14,9 @@
 	<h1>Toast</h1>
 	<script>
 		window.toast = new metal.Toast({
-			visible: true,
-			body: 'User was deleted successfully',
+			body: 'User was deleted successfully<button class="btn--transparent toast__undo-link">undo</button>',
 			elementClasses: 'toast--success',
-			dismissible: true,
-			spinner: true,
-			spinnerDone: true,
-			animClasses: {
-				show: 'animated slideInLeft',
-				hide: 'animated slideOutLeft'
-			}
+			dismissible: true
 		});
 	</script>
 </body>
