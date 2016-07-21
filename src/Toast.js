@@ -12,8 +12,8 @@ Toast.STATE = {
 	 */
 	animClasses: {
 		value: {
-			show: 'animated slideInLeft',
-			hide: 'animated slideOutLeft'
+			show: 'animated slideInBottom',
+			hide: 'animated slideOutBottom'
 		}
 	},
 

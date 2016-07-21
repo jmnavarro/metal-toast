@@ -1,6 +1,6 @@
 /* jshint ignore:start */
-import Component from 'metal-component/src/Component';
-import Soy from 'metal-soy/src/Soy';
+import Component from 'metal-component';
+import Soy from 'metal-soy';
 var templates;
 goog.loadModule(function(exports) {
 
@@ -52,15 +52,15 @@ function $render(opt_data, opt_ignored, opt_ijData) {
   soy.asserts.assertType(opt_data.body == null || (opt_data.body instanceof Function) || (opt_data.body instanceof soydata.UnsanitizedText) || goog.isString(opt_data.body), 'body', opt_data.body, '?soydata.SanitizedHtml|string|undefined');
   var body = /** @type {?soydata.SanitizedHtml|string|undefined} */ (opt_data.body);
   ie_open('div', null, null,
-      'class', 'toast' + (opt_data.elementClasses ? ' ' + opt_data.elementClasses : ''),
+      'class', 'alert' + (opt_data.elementClasses ? ' ' + opt_data.elementClasses : ''),
       'role', 'alert');
     if (opt_data.spinner) {
       ie_void('span', null, null,
-          'class', 'toast__spinner' + (opt_data.spinnerClasses ? ' ' + opt_data.spinnerClasses : '') + (opt_data.spinnerDone ? ' toast__spinner--done' : ''));
+          'class', 'spinner' + (opt_data.spinnerClasses ? ' ' + opt_data.spinnerClasses : '') + (opt_data.spinnerDone ? ' toast__spinner--done' : ''));
     }
     if (body) {
       ie_open('span', null, null,
-          'class', 'toast__body');
+          'class', 'alert-body');
         body();
       ie_close('span');
     }

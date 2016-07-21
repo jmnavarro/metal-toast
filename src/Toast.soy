@@ -10,12 +10,12 @@
  */
 {template .render}
 	{@param? body: html}
-	<div class="toast{$elementClasses ? ' ' + $elementClasses : ''}" role="alert">
+	<div class="alert{$elementClasses ? ' ' + $elementClasses : ''}" role="alert">
 		{if $spinner}
-			<span class="toast__spinner{$spinnerClasses ? ' ' + $spinnerClasses : ''}{$spinnerDone ? ' toast__spinner--done' : ''}"></span>
+			<span class="spinner{$spinnerClasses ? ' ' + $spinnerClasses : ''}{$spinnerDone ? ' toast__spinner--done' : ''}"></span>
 		{/if}
 		{if $body}
-			<span class="toast__body">{$body}</span>
+			<span class="alert-body">{$body}</span>
 		{/if}
 		{if $dismissible}
 			<button type="button" class="close" aria-label="Close" data-onclick="toggle">
