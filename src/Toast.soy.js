@@ -1,6 +1,6 @@
 /* jshint ignore:start */
-import Component from 'metal-component';
-import Soy from 'metal-soy';
+import Component from 'metal-component/src/Component';
+import Soy from 'metal-soy/src/Soy';
 var templates;
 goog.loadModule(function(exports) {
 
@@ -56,7 +56,7 @@ function $render(opt_data, opt_ignored, opt_ijData) {
       'role', 'alert');
     if (opt_data.spinner) {
       ie_void('span', null, null,
-          'class', 'spinner' + (opt_data.spinnerClasses ? ' ' + opt_data.spinnerClasses : '') + (opt_data.spinnerDone ? ' toast__spinner--done' : ''));
+          'class', 'spinner' + (opt_data.spinnerClasses ? ' ' + opt_data.spinnerClasses : '') + (opt_data.spinnerDone ? ' spinner-done' : ''));
     }
     if (body) {
       ie_open('span', null, null,
@@ -70,8 +70,10 @@ function $render(opt_data, opt_ignored, opt_ijData) {
           'class', 'close',
           'aria-label', 'Close',
           'data-onclick', 'toggle');
-        ie_void('span', null, null,
-            'class', 'close__icon icon-16-cancel');
+        ie_open('span', null, null,
+            'aria-hidden', 'true');
+          itext('\u00D7');
+        ie_close('span');
       ie_close('button');
     }
   ie_close('div');
