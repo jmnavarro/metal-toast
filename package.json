@@ -1,6 +1,6 @@
 {
 	"name": "metal-toast",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Metal.js Toast component",
 	"license": "BSD",
 	"repository": "wedeploy/metal-toast",
