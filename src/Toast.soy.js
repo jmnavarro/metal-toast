@@ -1,6 +1,6 @@
 /* jshint ignore:start */
-import Component from 'metal-component/src/Component';
-import Soy from 'metal-soy/src/Soy';
+import Component from 'metal-component';
+import Soy from 'metal-soy';
 var templates;
 goog.loadModule(function(exports) {
 
@@ -24,6 +24,8 @@ goog.require('goog.asserts');
 goog.require('soy.asserts');
 /** @suppress {extraRequire} */
 goog.require('goog.i18n.bidi');
+/** @suppress {extraRequire} */
+goog.require('goog.string');
 var IncrementalDom = goog.require('incrementaldom');
 var ie_open = IncrementalDom.elementOpen;
 var ie_close = IncrementalDom.elementClose;
