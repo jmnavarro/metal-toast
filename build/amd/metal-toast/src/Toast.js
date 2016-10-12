@@ -1,11 +1,11 @@
-define(['exports', './Toast.soy', 'metal-soy/src/Soy', 'metal-alert/src/Alert'], function (exports, _Toast, _Soy, _Alert2) {
+define(['exports', './Toast.soy.js', 'metal-soy/src/Soy', 'metal-alert/src/Alert'], function (exports, _ToastSoy, _Soy, _Alert2) {
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
 
-	var _Toast2 = _interopRequireDefault(_Toast);
+	var _ToastSoy2 = _interopRequireDefault(_ToastSoy);
 
 	var _Soy2 = _interopRequireDefault(_Soy);
 
@@ -99,7 +99,7 @@ define(['exports', './Toast.soy', 'metal-soy/src/Soy', 'metal-alert/src/Alert'],
 		}
 	};
 
-	_Soy2.default.register(Toast, _Toast2.default);
+	_Soy2.default.register(Toast, _ToastSoy2.default);
 
 	exports.default = Toast;
 });
