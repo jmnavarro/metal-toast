@@ -13,7 +13,8 @@
   "files": [
     "lib",
     "src",
-    "test"
+    "test",
+    "build"
   ],
   "scripts": {
     "build": "gulp build",
