@@ -96,6 +96,16 @@ babelHelpers.possibleConstructorReturn = function (self, call) {
   return call && (typeof call === "object" || typeof call === "function") ? call : self;
 };
 
+babelHelpers.toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
 babelHelpers;
 'use strict';
 
@@ -105,313 +115,330 @@ babelHelpers;
  */
 
 (function () {
-	var core = function () {
-		function core() {
-			babelHelpers.classCallCheck(this, core);
-		}
+  var compatibilityModeData_ = void 0;
 
-		babelHelpers.createClass(core, null, [{
-			key: 'abstractMethod',
+  /**
+   * Counter for unique id.
+   * @type {Number}
+   * @private
+   */
+  var uniqueIdCounter_ = 1;
 
-			/**
-    * When defining a class Foo with an abstract method bar(), you can do:
-    * Foo.prototype.bar = core.abstractMethod
-    *
-    * Now if a subclass of Foo fails to override bar(), an error will be thrown
-    * when bar() is invoked.
-    *
-    * @type {!Function}
-    * @throws {Error} when invoked to indicate the method should be overridden.
-    */
-			value: function abstractMethod() {
-				throw Error('Unimplemented abstract method');
-			}
+  /**
+   * Unique id property prefix.
+   * @type {String}
+   * @protected
+   */
+  var UID_PROPERTY = 'core_' + (Math.random() * 1e9 >>> 0);
 
-			/**
-    * Loops constructor super classes collecting its properties values. If
-    * property is not available on the super class `undefined` will be
-    * collected as value for the class hierarchy position.
-    * @param {!function()} constructor Class constructor.
-    * @param {string} propertyName Property name to be collected.
-    * @return {Array.<*>} Array of collected values.
-    * TODO(*): Rethink superclass loop.
-    */
+  this['metalNamed']['coreNamed'] = this['metalNamed']['coreNamed'] || {};
+  this['metalNamed']['coreNamed']['UID_PROPERTY'] = UID_PROPERTY; /**
+                                                                   * When defining a class Foo with an abstract method bar(), you can do:
+                                                                   * Foo.prototype.bar = abstractMethod
+                                                                   *
+                                                                   * Now if a subclass of Foo fails to override bar(), an error will be thrown
+                                                                   * when bar() is invoked.
+                                                                   *
+                                                                   * @type {!Function}
+                                                                   * @throws {Error} when invoked to indicate the method should be overridden.
+                                                                   */
 
-		}, {
-			key: 'collectSuperClassesProperty',
-			value: function collectSuperClassesProperty(constructor, propertyName) {
-				var propertyValues = [constructor[propertyName]];
-				while (constructor.__proto__ && !constructor.__proto__.isPrototypeOf(Function)) {
-					constructor = constructor.__proto__;
-					propertyValues.push(constructor[propertyName]);
-				}
-				return propertyValues;
-			}
+  function abstractMethod() {
+    throw Error('Unimplemented abstract method');
+  }
 
-			/**
-    * Gets the name of the given function. If the current browser doesn't
-    * support the `name` property, this will calculate it from the function's
-    * content string.
-    * @param {!function()} fn
-    * @return {string}
-    */
+  this['metalNamed']['coreNamed']['abstractMethod'] = abstractMethod; /**
+                                                                       * Loops constructor super classes collecting its properties values. If
+                                                                       * property is not available on the super class `undefined` will be
+                                                                       * collected as value for the class hierarchy position.
+                                                                       * @param {!function()} constructor Class constructor.
+                                                                       * @param {string} propertyName Property name to be collected.
+                                                                       * @return {Array.<*>} Array of collected values.
+                                                                       * TODO(*): Rethink superclass loop.
+                                                                       */
 
-		}, {
-			key: 'getFunctionName',
-			value: function getFunctionName(fn) {
-				if (!fn.name) {
-					var str = fn.toString();
-					fn.name = str.substring(9, str.indexOf('('));
-				}
-				return fn.name;
-			}
+  function collectSuperClassesProperty(constructor, propertyName) {
+    var propertyValues = [constructor[propertyName]];
+    while (constructor.__proto__ && !constructor.__proto__.isPrototypeOf(Function)) {
+      constructor = constructor.__proto__;
+      propertyValues.push(constructor[propertyName]);
+    }
+    return propertyValues;
+  }
 
-			/**
-    * Gets an unique id. If `opt_object` argument is passed, the object is
-    * mutated with an unique id. Consecutive calls with the same object
-    * reference won't mutate the object again, instead the current object uid
-    * returns. See {@link core.UID_PROPERTY}.
-    * @param {Object=} opt_object Optional object to be mutated with the uid. If
-    *     not specified this method only returns the uid.
-    * @param {boolean=} opt_noInheritance Optional flag indicating if this
-    *     object's uid property can be inherited from parents or not.
-    * @throws {Error} when invoked to indicate the method should be overridden.
-    */
+  this['metalNamed']['coreNamed']['collectSuperClassesProperty'] = collectSuperClassesProperty; /**
+                                                                                                 * Disables Metal.js's compatibility mode.
+                                                                                                 */
 
-		}, {
-			key: 'getUid',
-			value: function getUid(opt_object, opt_noInheritance) {
-				if (opt_object) {
-					var id = opt_object[core.UID_PROPERTY];
-					if (opt_noInheritance && !opt_object.hasOwnProperty(core.UID_PROPERTY)) {
-						id = null;
-					}
-					return id || (opt_object[core.UID_PROPERTY] = core.uniqueIdCounter_++);
-				}
-				return core.uniqueIdCounter_++;
-			}
+  function disableCompatibilityMode() {
+    compatibilityModeData_ = null;
+  }
 
-			/**
-    * The identity function. Returns its first argument.
-    * @param {*=} opt_returnValue The single value that will be returned.
-    * @return {?} The first argument.
-    */
+  this['metalNamed']['coreNamed']['disableCompatibilityMode'] = disableCompatibilityMode; /**
+                                                                                           * Enables Metal.js's compatibility mode with the following features from rc
+                                                                                           * and 1.x versions:
+                                                                                           *     - Using "key" to reference component instances. In the current version
+                                                                                           *       this should be done via "ref" instead. This allows old code still
+                                                                                           *       using "key" to keep working like before. NOTE: this may cause
+                                                                                           *       problems, since "key" is meant to be used differently. Only use this
+                                                                                           *       if it's not possible to upgrade the code to use "ref" instead.
+                                                                                           * @param {Object=} opt_data Optional object with data to specify more
+                                                                                           *     details, such as:
+                                                                                           *         - renderers {Array} the template renderers that should be in
+                                                                                           *           compatibility mode, either their constructors or strings
+                                                                                           *           representing them (e.g. 'soy' or 'jsx'). By default, all the ones
+                                                                                           *           that extend from IncrementalDomRenderer.
+                                                                                           * @type {Object}
+                                                                                           */
 
-		}, {
-			key: 'identityFunction',
-			value: function identityFunction(opt_returnValue) {
-				return opt_returnValue;
-			}
+  function enableCompatibilityMode() {
+    var opt_data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-			/**
-    * Returns true if the specified value is a boolean.
-    * @param {?} val Variable to test.
-    * @return {boolean} Whether variable is boolean.
-    */
+    compatibilityModeData_ = opt_data;
+  }
 
-		}, {
-			key: 'isBoolean',
-			value: function isBoolean(val) {
-				return typeof val === 'boolean';
-			}
+  this['metalNamed']['coreNamed']['enableCompatibilityMode'] = enableCompatibilityMode; /**
+                                                                                         * Returns the data used for compatibility mode, or nothing if it hasn't been
+                                                                                         * enabled.
+                                                                                         * @return {Object}
+                                                                                         */
 
-			/**
-    * Returns true if the specified value is not undefined.
-    * @param {?} val Variable to test.
-    * @return {boolean} Whether variable is defined.
-    */
+  function getCompatibilityModeData() {
+    // Compatibility mode can be set via the __METAL_COMPATIBILITY__ global var.
+    if (!compatibilityModeData_) {
+      if (typeof window !== 'undefined' && window.__METAL_COMPATIBILITY__) {
+        enableCompatibilityMode(window.__METAL_COMPATIBILITY__);
+      }
+    }
+    return compatibilityModeData_;
+  }
 
-		}, {
-			key: 'isDef',
-			value: function isDef(val) {
-				return val !== undefined;
-			}
+  this['metalNamed']['coreNamed']['getCompatibilityModeData'] = getCompatibilityModeData; /**
+                                                                                           * Gets the name of the given function. If the current browser doesn't
+                                                                                           * support the `name` property, this will calculate it from the function's
+                                                                                           * content string.
+                                                                                           * @param {!function()} fn
+                                                                                           * @return {string}
+                                                                                           */
 
-			/**
-    * Returns true if value is not undefined or null.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function getFunctionName(fn) {
+    if (!fn.name) {
+      var str = fn.toString();
+      fn.name = str.substring(9, str.indexOf('('));
+    }
+    return fn.name;
+  }
 
-		}, {
-			key: 'isDefAndNotNull',
-			value: function isDefAndNotNull(val) {
-				return core.isDef(val) && !core.isNull(val);
-			}
+  this['metalNamed']['coreNamed']['getFunctionName'] = getFunctionName; /**
+                                                                         * Gets an unique id. If `opt_object` argument is passed, the object is
+                                                                         * mutated with an unique id. Consecutive calls with the same object
+                                                                         * reference won't mutate the object again, instead the current object uid
+                                                                         * returns. See {@link UID_PROPERTY}.
+                                                                         * @param {Object=} opt_object Optional object to be mutated with the uid. If
+                                                                         *     not specified this method only returns the uid.
+                                                                         * @param {boolean=} opt_noInheritance Optional flag indicating if this
+                                                                         *     object's uid property can be inherited from parents or not.
+                                                                         * @throws {Error} when invoked to indicate the method should be overridden.
+                                                                         */
 
-			/**
-    * Returns true if value is a document.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function getUid(opt_object, opt_noInheritance) {
+    if (opt_object) {
+      var id = opt_object[UID_PROPERTY];
+      if (opt_noInheritance && !opt_object.hasOwnProperty(UID_PROPERTY)) {
+        id = null;
+      }
+      return id || (opt_object[UID_PROPERTY] = uniqueIdCounter_++);
+    }
+    return uniqueIdCounter_++;
+  }
 
-		}, {
-			key: 'isDocument',
-			value: function isDocument(val) {
-				return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 9;
-			}
+  this['metalNamed']['coreNamed']['getUid'] = getUid; /**
+                                                       * The identity function. Returns its first argument.
+                                                       * @param {*=} opt_returnValue The single value that will be returned.
+                                                       * @return {?} The first argument.
+                                                       */
 
-			/**
-    * Returns true if value is a dom element.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function identityFunction(opt_returnValue) {
+    return opt_returnValue;
+  }
 
-		}, {
-			key: 'isElement',
-			value: function isElement(val) {
-				return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 1;
-			}
+  this['metalNamed']['coreNamed']['identityFunction'] = identityFunction; /**
+                                                                           * Returns true if the specified value is a boolean.
+                                                                           * @param {?} val Variable to test.
+                                                                           * @return {boolean} Whether variable is boolean.
+                                                                           */
 
-			/**
-    * Returns true if the specified value is a function.
-    * @param {?} val Variable to test.
-    * @return {boolean} Whether variable is a function.
-    */
+  function isBoolean(val) {
+    return typeof val === 'boolean';
+  }
 
-		}, {
-			key: 'isFunction',
-			value: function isFunction(val) {
-				return typeof val === 'function';
-			}
+  this['metalNamed']['coreNamed']['isBoolean'] = isBoolean; /**
+                                                             * Returns true if the specified value is not undefined.
+                                                             * @param {?} val Variable to test.
+                                                             * @return {boolean} Whether variable is defined.
+                                                             */
 
-			/**
-    * Returns true if value is null.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function isDef(val) {
+    return val !== undefined;
+  }
 
-		}, {
-			key: 'isNull',
-			value: function isNull(val) {
-				return val === null;
-			}
+  this['metalNamed']['coreNamed']['isDef'] = isDef; /**
+                                                     * Returns true if value is not undefined or null.
+                                                     * @param {*} val
+                                                     * @return {boolean}
+                                                     */
 
-			/**
-    * Returns true if the specified value is a number.
-    * @param {?} val Variable to test.
-    * @return {boolean} Whether variable is a number.
-    */
+  function isDefAndNotNull(val) {
+    return isDef(val) && !isNull(val);
+  }
 
-		}, {
-			key: 'isNumber',
-			value: function isNumber(val) {
-				return typeof val === 'number';
-			}
+  this['metalNamed']['coreNamed']['isDefAndNotNull'] = isDefAndNotNull; /**
+                                                                         * Returns true if value is a document.
+                                                                         * @param {*} val
+                                                                         * @return {boolean}
+                                                                         */
 
-			/**
-    * Returns true if value is a window.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function isDocument(val) {
+    return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 9;
+  }
 
-		}, {
-			key: 'isWindow',
-			value: function isWindow(val) {
-				return val !== null && val === val.window;
-			}
+  this['metalNamed']['coreNamed']['isDocument'] = isDocument; /**
+                                                               * Returns true if value is a dom element.
+                                                               * @param {*} val
+                                                               * @return {boolean}
+                                                               */
 
-			/**
-    * Returns true if the specified value is an object. This includes arrays
-    * and functions.
-    * @param {?} val Variable to test.
-    * @return {boolean} Whether variable is an object.
-    */
+  function isElement(val) {
+    return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 1;
+  }
 
-		}, {
-			key: 'isObject',
-			value: function isObject(val) {
-				var type = typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val);
-				return type === 'object' && val !== null || type === 'function';
-			}
+  this['metalNamed']['coreNamed']['isElement'] = isElement; /**
+                                                             * Returns true if the specified value is a function.
+                                                             * @param {?} val Variable to test.
+                                                             * @return {boolean} Whether variable is a function.
+                                                             */
 
-			/**
-    * Returns true if value is a Promise.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function isFunction(val) {
+    return typeof val === 'function';
+  }
 
-		}, {
-			key: 'isPromise',
-			value: function isPromise(val) {
-				return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && typeof val.then === 'function';
-			}
+  this['metalNamed']['coreNamed']['isFunction'] = isFunction; /**
+                                                               * Returns true if value is null.
+                                                               * @param {*} val
+                                                               * @return {boolean}
+                                                               */
 
-			/**
-    * Returns true if value is a string.
-    * @param {*} val
-    * @return {Boolean}
-    */
+  function isNull(val) {
+    return val === null;
+  }
 
-		}, {
-			key: 'isString',
-			value: function isString(val) {
-				return typeof val === 'string';
-			}
+  this['metalNamed']['coreNamed']['isNull'] = isNull; /**
+                                                       * Returns true if the specified value is a number.
+                                                       * @param {?} val Variable to test.
+                                                       * @return {boolean} Whether variable is a number.
+                                                       */
 
-			/**
-    * Merges the values of a static property a class with the values of that
-    * property for all its super classes, and stores it as a new static
-    * property of that class. If the static property already existed, it won't
-    * be recalculated.
-    * @param {!function()} constructor Class constructor.
-    * @param {string} propertyName Property name to be collected.
-    * @param {function(*, *):*=} opt_mergeFn Function that receives an array filled
-    *   with the values of the property for the current class and all its super classes.
-    *   Should return the merged value to be stored on the current class.
-    * @return {boolean} Returns true if merge happens, false otherwise.
-    */
+  function isNumber(val) {
+    return typeof val === 'number';
+  }
 
-		}, {
-			key: 'mergeSuperClassesProperty',
-			value: function mergeSuperClassesProperty(constructor, propertyName, opt_mergeFn) {
-				var mergedName = propertyName + '_MERGED';
-				if (constructor.hasOwnProperty(mergedName)) {
-					return false;
-				}
+  this['metalNamed']['coreNamed']['isNumber'] = isNumber; /**
+                                                           * Returns true if value is a window.
+                                                           * @param {*} val
+                                                           * @return {boolean}
+                                                           */
 
-				var merged = core.collectSuperClassesProperty(constructor, propertyName);
-				if (opt_mergeFn) {
-					merged = opt_mergeFn(merged);
-				}
-				constructor[mergedName] = merged;
-				return true;
-			}
+  function isWindow(val) {
+    return val !== null && val === val.window;
+  }
 
-			/**
-    * Null function used for default values of callbacks, etc.
-    * @return {void} Nothing.
-    */
+  this['metalNamed']['coreNamed']['isWindow'] = isWindow; /**
+                                                           * Returns true if the specified value is an object. This includes arrays
+                                                           * and functions.
+                                                           * @param {?} val Variable to test.
+                                                           * @return {boolean} Whether variable is an object.
+                                                           */
 
-		}, {
-			key: 'nullFunction',
-			value: function nullFunction() {}
-		}]);
-		return core;
-	}();
+  function isObject(val) {
+    var type = typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val);
+    return type === 'object' && val !== null || type === 'function';
+  }
 
-	/**
-  * Unique id property prefix.
-  * @type {String}
-  * @protected
-  */
+  this['metalNamed']['coreNamed']['isObject'] = isObject; /**
+                                                           * Returns true if value is a Promise.
+                                                           * @param {*} val
+                                                           * @return {boolean}
+                                                           */
 
+  function isPromise(val) {
+    return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && typeof val.then === 'function';
+  }
 
-	core.UID_PROPERTY = 'core_' + (Math.random() * 1e9 >>> 0);
+  this['metalNamed']['coreNamed']['isPromise'] = isPromise; /**
+                                                             * Returns true if value is a string.
+                                                             * @param {*} val
+                                                             * @return {boolean}
+                                                             */
 
-	/**
-  * Counter for unique id.
-  * @type {Number}
-  * @private
-  */
-	core.uniqueIdCounter_ = 1;
+  function isString(val) {
+    return typeof val === 'string' || val instanceof String;
+  }
 
-	this['metal']['core'] = core;
+  this['metalNamed']['coreNamed']['isString'] = isString; /**
+                                                           * Merges the values of a export function property a class with the values of that
+                                                           * property for all its super classes, and stores it as a new static
+                                                           * property of that class. If the export function property already existed, it won't
+                                                           * be recalculated.
+                                                           * @param {!function()} constructor Class constructor.
+                                                           * @param {string} propertyName Property name to be collected.
+                                                           * @param {function(*, *):*=} opt_mergeFn Function that receives an array filled
+                                                           *   with the values of the property for the current class and all its super classes.
+                                                           *   Should return the merged value to be stored on the current class.
+                                                           * @return {boolean} Returns true if merge happens, false otherwise.
+                                                           */
+
+  function mergeSuperClassesProperty(constructor, propertyName, opt_mergeFn) {
+    var mergedName = propertyName + '_MERGED';
+    if (constructor.hasOwnProperty(mergedName)) {
+      return false;
+    }
+
+    var merged = collectSuperClassesProperty(constructor, propertyName);
+    if (opt_mergeFn) {
+      merged = opt_mergeFn(merged);
+    }
+    constructor[mergedName] = merged;
+    return true;
+  }
+
+  this['metalNamed']['coreNamed']['mergeSuperClassesProperty'] = mergeSuperClassesProperty; /**
+                                                                                             * Null function used for default values of callbacks, etc.
+                                                                                             * @return {void} Nothing.
+                                                                                             */
+
+  function nullFunction() {}
+  this['metalNamed']['coreNamed']['nullFunction'] = nullFunction;
+}).call(this);
+'use strict';
+
+// This file exists just for backwards compatibility, making sure that old
+// default imports for this file still work. It's best to use the named exports
+// for each function instead though, since that allows bundlers like Rollup to
+// reduce the bundle size by removing unused code.
+
+(function () {
+  var core = this['metalNamed']['coreNamed'];
+  this['metal']['core'] = core;
+  this['metalNamed']['core'] = this['metalNamed']['core'] || {};
+  this['metalNamed']['core']['core'] = core;
+  Object.keys(this['metalNamed']['coreNamed']).forEach(function (key) {
+    this['metalNamed']['core'][key] = this['metalNamed']['coreNamed'][key];
+  });
 }).call(this);
 'use strict';
 
 (function () {
-	var core = this['metal']['core'];
+	var isDef = this['metalNamed']['core']['isDef'];
 
 	var array = function () {
 		function array() {
@@ -523,7 +550,7 @@ babelHelpers;
 			key: 'slice',
 			value: function slice(arr, start, opt_end) {
 				var sliced = [];
-				var end = core.isDef(opt_end) ? opt_end : arr.length;
+				var end = isDef(opt_end) ? opt_end : arr.length;
 				for (var i = start; i < end; i++) {
 					sliced.push(arr[i]);
 				}
@@ -1030,14 +1057,16 @@ babelHelpers;
   var Disposable = this['metal']['Disposable'];
   var object = this['metal']['object'];
   var string = this['metal']['string'];
-  this['metal']['metal'] = core;
   this['metalNamed']['metal'] = this['metalNamed']['metal'] || {};
-  this['metalNamed']['metal']['core'] = core;
+  Object.keys(this['metalNamed']['core']).forEach(function (key) {
+    this['metalNamed']['metal'][key] = this['metalNamed']['core'][key];
+  });
   this['metalNamed']['metal']['array'] = array;
   this['metalNamed']['metal']['async'] = async;
   this['metalNamed']['metal']['Disposable'] = Disposable;
   this['metalNamed']['metal']['object'] = object;
   this['metalNamed']['metal']['string'] = string;
+  this['metal']['metal'] = core;
 }).call(this);
 'use strict';
 
@@ -1155,9 +1184,10 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metalNamed']['metal']['core'];
 	var array = this['metalNamed']['metal']['array'];
 	var Disposable = this['metalNamed']['metal']['Disposable'];
+	var isFunction = this['metalNamed']['metal']['isFunction'];
+	var isString = this['metalNamed']['metal']['isString'];
 	var EventHandle = this['metal']['EventHandle'];
 
 	/**
@@ -1419,7 +1449,7 @@ babelHelpers;
 		}, {
 			key: 'normalizeEvents_',
 			value: function normalizeEvents_(events) {
-				return core.isString(events) ? [events] : events;
+				return isString(events) ? [events] : events;
 			}
 
 			/**
@@ -1565,7 +1595,7 @@ babelHelpers;
 		}, {
 			key: 'validateListener_',
 			value: function validateListener_(listener) {
-				if (!core.isFunction(listener)) {
+				if (!isFunction(listener)) {
 					throw new TypeError('Listener must be a function');
 				}
 			}
@@ -1579,6 +1609,7 @@ babelHelpers;
 
 (function () {
 	var array = this['metalNamed']['metal']['array'];
+	var object = this['metalNamed']['metal']['object'];
 	var Disposable = this['metalNamed']['metal']['Disposable'];
 
 	/**
@@ -1609,7 +1640,9 @@ babelHelpers;
     */
 			var _this = babelHelpers.possibleConstructorReturn(this, (EventEmitterProxy.__proto__ || Object.getPrototypeOf(EventEmitterProxy)).call(this));
 
-			_this.blacklist_ = opt_blacklist || {};
+			_this.blacklist_ = object.mixin({
+				newListener: true
+			}, opt_blacklist);
 
 			/**
     * The origin emitter. This emitter's events will be proxied through the
@@ -1902,7 +1935,7 @@ babelHelpers;
 
 (function () {
 	var array = this['metalNamed']['metal']['array'];
-	var core = this['metalNamed']['metal']['core'];
+	var isString = this['metalNamed']['metal']['isString'];
 	var domData = this['metal']['domData'];
 	var EventHandle = this['metalNamed']['events']['EventHandle'];
 
@@ -1943,8 +1976,8 @@ babelHelpers;
 			value: function removeListener() {
 				var data = domData.get(this.emitter_);
 				var selector = this.selector_;
-				var arr = core.isString(selector) ? data.delegating[this.event_].selectors : data.listeners;
-				var key = core.isString(selector) ? selector : this.event_;
+				var arr = isString(selector) ? data.delegating[this.event_].selectors : data.listeners;
+				var key = isString(selector) ? selector : this.event_;
 
 				array.remove(arr[key] || [], this.listener_);
 				if (arr[key] && arr[key].length === 0) {
@@ -2008,13 +2041,22 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metalNamed']['metal']['core'];
+	var isDef = this['metalNamed']['metal']['isDef'];
+	var isDocument = this['metalNamed']['metal']['isDocument'];
+	var isElement = this['metalNamed']['metal']['isElement'];
+	var isObject = this['metalNamed']['metal']['isObject'];
+	var isString = this['metalNamed']['metal']['isString'];
 	var object = this['metalNamed']['metal']['object'];
 	var domData = this['metal']['domData'];
 	var DomDelegatedEventHandle = this['metal']['DomDelegatedEventHandle'];
 	var DomEventHandle = this['metal']['DomEventHandle'];
 
 
+	var elementsByTag_ = {};
+	var customEvents = {};
+
+	this['metalNamed']['domNamed'] = this['metalNamed']['domNamed'] || {};
+	this['metalNamed']['domNamed']['customEvents'] = customEvents;
 	var NEXT_TARGET = '__metal_next_target__';
 	var USE_CAPTURE = {
 		blur: true,
@@ -2025,854 +2067,835 @@ babelHelpers;
 		scroll: true
 	};
 
-	var dom = function () {
-		function dom() {
-			babelHelpers.classCallCheck(this, dom);
+	/**
+  * Adds the requested CSS classes to an element.
+  * @param {!Element|!Nodelist} elements The element or elements to add CSS classes to.
+  * @param {string} classes CSS classes to add.
+  */
+	function addClasses(elements, classes) {
+		if (!isObject(elements) || !isString(classes)) {
+			return;
 		}
 
-		babelHelpers.createClass(dom, null, [{
-			key: 'addClasses',
+		if (!elements.length) {
+			elements = [elements];
+		}
 
-			/**
-    * Adds the requested CSS classes to an element.
-    * @param {!Element} element The element to add CSS classes to.
-    * @param {string} classes CSS classes to add.
-    */
-			value: function addClasses(element, classes) {
-				if (!core.isObject(element) || !core.isString(classes)) {
-					return;
-				}
-
-				if ('classList' in element) {
-					dom.addClassesWithNative_(element, classes);
-				} else {
-					dom.addClassesWithoutNative_(element, classes);
-				}
+		for (var i = 0; i < elements.length; i++) {
+			if ('classList' in elements[i]) {
+				addClassesWithNative_(elements[i], classes);
+			} else {
+				addClassesWithoutNative_(elements[i], classes);
 			}
+		}
+	}
 
-			/**
-    * Adds the requested CSS classes to an element using classList.
-    * @param {!Element} element The element to add CSS classes to.
-    * @param {string} classes CSS classes to add.
-    * @protected
-    */
+	this['metalNamed']['domNamed']['addClasses'] = addClasses; /**
+                                                             * Adds the requested CSS classes to an element using classList.
+                                                             * @param {!Element} element The element to add CSS classes to.
+                                                             * @param {string} classes CSS classes to add.
+                                                             * @private
+                                                             */
 
-		}, {
-			key: 'addClassesWithNative_',
-			value: function addClassesWithNative_(element, classes) {
-				classes.split(' ').forEach(function (className) {
-					if (className) {
-						element.classList.add(className);
-					}
-				});
+	function addClassesWithNative_(element, classes) {
+		classes.split(' ').forEach(function (className) {
+			if (className) {
+				element.classList.add(className);
 			}
+		});
+	}
 
-			/**
-    * Adds the requested CSS classes to an element without using classList.
-    * @param {!Element} element The element to add CSS classes to.
-    * @param {string} classes CSS classes to add.
-    * @protected
-    */
+	/**
+  * Adds the requested CSS classes to an element without using classList.
+  * @param {!Element} element The element to add CSS classes to.
+  * @param {string} classes CSS classes to add.
+  * @private
+  */
+	function addClassesWithoutNative_(element, classes) {
+		var elementClassName = ' ' + element.className + ' ';
+		var classesToAppend = '';
 
-		}, {
-			key: 'addClassesWithoutNative_',
-			value: function addClassesWithoutNative_(element, classes) {
-				var elementClassName = ' ' + element.className + ' ';
-				var classesToAppend = '';
+		classes = classes.split(' ');
 
-				classes = classes.split(' ');
+		for (var i = 0; i < classes.length; i++) {
+			var className = classes[i];
 
-				for (var i = 0; i < classes.length; i++) {
-					var className = classes[i];
-
-					if (elementClassName.indexOf(' ' + className + ' ') === -1) {
-						classesToAppend += ' ' + className;
-					}
-				}
-
-				if (classesToAppend) {
-					element.className = element.className + classesToAppend;
-				}
+			if (elementClassName.indexOf(' ' + className + ' ') === -1) {
+				classesToAppend += ' ' + className;
 			}
+		}
 
-			/**
-    * Adds an event listener to the given element, to be triggered via delegate.
-    * @param {!Element} element
-    * @param {string} eventName
-    * @param {!function()} listener
-    * @protected
-    */
+		if (classesToAppend) {
+			element.className = element.className + classesToAppend;
+		}
+	}
 
-		}, {
-			key: 'addElementListener_',
-			value: function addElementListener_(element, eventName, listener) {
-				var data = domData.get(element);
-				dom.addToArr_(data.listeners, eventName, listener);
+	/**
+  * Adds an event listener to the given element, to be triggered via delegate.
+  * @param {!Element} element
+  * @param {string} eventName
+  * @param {!function()} listener
+  * @private
+  */
+	function addElementListener_(element, eventName, listener) {
+		var data = domData.get(element);
+		addToArr_(data.listeners, eventName, listener);
+	}
+
+	/**
+  * Adds an event listener to the given element, to be triggered via delegate
+  * selectors.
+  * @param {!Element} element
+  * @param {string} eventName
+  * @param {string} selector
+  * @param {!function()} listener
+  * @private
+  */
+	function addSelectorListener_(element, eventName, selector, listener) {
+		var data = domData.get(element);
+		addToArr_(data.delegating[eventName].selectors, selector, listener);
+	}
+
+	/**
+  * Adds a value to an array inside an object, creating it first if it doesn't
+  * yet exist.
+  * @param {!Array} arr
+  * @param {string} key
+  * @param {*} value
+  * @private
+  */
+	function addToArr_(arr, key, value) {
+		if (!arr[key]) {
+			arr[key] = [];
+		}
+		arr[key].push(value);
+	}
+
+	/**
+  * Attaches a delegate listener, unless there's already one attached.
+  * @param {!Element} element
+  * @param {string} eventName
+  * @private
+  */
+	function attachDelegateEvent_(element, eventName) {
+		var data = domData.get(element);
+		if (!data.delegating[eventName]) {
+			data.delegating[eventName] = {
+				handle: on(element, eventName, handleDelegateEvent_, !!USE_CAPTURE[eventName]),
+				selectors: {}
+			};
+		}
+	}
+
+	/**
+  * Gets the closest element up the tree from the given element (including
+  * itself) that matches the specified selector, or null if none match.
+  * @param {Element} element
+  * @param {string} selector
+  * @return {Element}
+  */
+	function closest(element, selector) {
+		while (element && !match(element, selector)) {
+			element = element.parentNode;
+		}
+		return element;
+	}
+
+	this['metalNamed']['domNamed']['closest'] = closest; /**
+                                                       * Appends a child node with text or other nodes to a parent node. If
+                                                       * child is a HTML string it will be automatically converted to a document
+                                                       * fragment before appending it to the parent.
+                                                       * @param {!Element} parent The node to append nodes to.
+                                                       * @param {!(Element|NodeList|string)} child The thing to append to the parent.
+                                                       * @return {!Element} The appended child.
+                                                       */
+
+	function append(parent, child) {
+		if (isString(child)) {
+			child = buildFragment(child);
+		}
+		if (child instanceof NodeList) {
+			var childArr = Array.prototype.slice.call(child);
+			for (var i = 0; i < childArr.length; i++) {
+				parent.appendChild(childArr[i]);
 			}
+		} else {
+			parent.appendChild(child);
+		}
+		return child;
+	}
 
-			/**
-    * Adds an event listener to the given element, to be triggered via delegate
-    * selectors.
-    * @param {!Element} element
-    * @param {string} eventName
-    * @param {string} selector
-    * @param {!function()} listener
-    * @protected
-    */
+	this['metalNamed']['domNamed']['append'] = append; /**
+                                                     * Helper for converting a HTML string into a document fragment.
+                                                     * @param {string} htmlString The HTML string to convert.
+                                                     * @return {!Element} The resulting document fragment.
+                                                     */
 
-		}, {
-			key: 'addSelectorListener_',
-			value: function addSelectorListener_(element, eventName, selector, listener) {
-				var data = domData.get(element);
-				dom.addToArr_(data.delegating[eventName].selectors, selector, listener);
+	function buildFragment(htmlString) {
+		var tempDiv = document.createElement('div');
+		tempDiv.innerHTML = '<br>' + htmlString;
+		tempDiv.removeChild(tempDiv.firstChild);
+
+		var fragment = document.createDocumentFragment();
+		while (tempDiv.firstChild) {
+			fragment.appendChild(tempDiv.firstChild);
+		}
+		return fragment;
+	}
+
+	this['metalNamed']['domNamed']['buildFragment'] = buildFragment; /**
+                                                                   * Checks if the first element contains the second one.
+                                                                   * @param {!Element} element1
+                                                                   * @param {!Element} element2
+                                                                   * @return {boolean}
+                                                                   */
+
+	function contains(element1, element2) {
+		if (isDocument(element1)) {
+			// document.contains is not defined on IE9, so call it on documentElement instead.
+			return element1.documentElement.contains(element2);
+		} else {
+			return element1.contains(element2);
+		}
+	}
+
+	this['metalNamed']['domNamed']['contains'] = contains; /**
+                                                         * Listens to the specified event on the given DOM element, but only calls the
+                                                         * given callback listener when it's triggered by elements that match the
+                                                         * given selector or target element.
+                                                         * @param {!Element} element The DOM element the event should be listened on.
+                                                         * @param {string} eventName The name of the event to listen to.
+                                                         * @param {!Element|string} selectorOrTarget Either an element or css selector
+                                                         *     that should match the event for the listener to be triggered.
+                                                         * @param {!function(!Object)} callback Function to be called when the event
+                                                         *     is triggered. It will receive the normalized event object.
+                                                         * @param {boolean=} opt_default Optional flag indicating if this is a default
+                                                         *     listener. That means that it would only be executed after all non
+                                                         *     default listeners, and only if the event isn't prevented via
+                                                         *     `preventDefault`.
+                                                         * @return {!EventHandle} Can be used to remove the listener.
+                                                         */
+
+	function delegate(element, eventName, selectorOrTarget, callback, opt_default) {
+		var customConfig = customEvents[eventName];
+		if (customConfig && customConfig.delegate) {
+			eventName = customConfig.originalEvent;
+			callback = customConfig.handler.bind(customConfig, callback);
+		}
+
+		if (opt_default) {
+			// Wrap callback so we don't set property directly on it.
+			callback = callback.bind();
+			callback.defaultListener_ = true;
+		}
+
+		attachDelegateEvent_(element, eventName);
+		if (isString(selectorOrTarget)) {
+			addSelectorListener_(element, eventName, selectorOrTarget, callback);
+		} else {
+			addElementListener_(selectorOrTarget, eventName, callback);
+		}
+
+		return new DomDelegatedEventHandle(isString(selectorOrTarget) ? element : selectorOrTarget, eventName, callback, isString(selectorOrTarget) ? selectorOrTarget : null);
+	}
+
+	this['metalNamed']['domNamed']['delegate'] = delegate; /**
+                                                         * Verifies if the element is able to trigger the Click event,
+                                                         * simulating browsers behaviour, avoiding event listeners to be called by triggerEvent method.
+                                                         * @param {Element} node Element to be checked.
+                                                         * @param {string} eventName The event name.
+                                                         * @private
+                                                         */
+
+	function isAbleToInteractWith_(node, eventName, opt_eventObj) {
+		if (opt_eventObj && eventName === 'click' && opt_eventObj.button === 2) {
+			// Firefox triggers "click" events on the document for right clicks. This
+			// causes our delegate logic to trigger it for regular elements too, which
+			// shouldn't happen. Ignoring them here.
+			return false;
+		}
+
+		var matchesSelector = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FIELDSET'];
+		if (eventName === 'click' && matchesSelector.indexOf(node.tagName) > -1) {
+			return !(node.disabled || parent(node, 'fieldset[disabled]'));
+		}
+		return true;
+	}
+
+	/**
+  * Inserts node in document as last element.
+  * @param {Element} node Element to remove children from.
+  */
+	function enterDocument(node) {
+		node && append(document.body, node);
+	}
+
+	this['metalNamed']['domNamed']['enterDocument'] = enterDocument; /**
+                                                                   * Removes node from document.
+                                                                   * @param {Element} node Element to remove children from.
+                                                                   */
+
+	function exitDocument(node) {
+		if (node && node.parentNode) {
+			node.parentNode.removeChild(node);
+		}
+	}
+
+	this['metalNamed']['domNamed']['exitDocument'] = exitDocument; /**
+                                                                 * This is called when an event is triggered by a delegate listener. All
+                                                                 * matching listeners of this event type from `target` to `currentTarget` will
+                                                                 * be triggered.
+                                                                 * @param {!Event} event The event payload.
+                                                                 * @return {boolean} False if at least one of the triggered callbacks returns
+                                                                 *     false, or true otherwise.
+                                                                 * @private
+                                                                 */
+
+	function handleDelegateEvent_(event) {
+		normalizeDelegateEvent_(event);
+		var currElement = isDef(event[NEXT_TARGET]) ? event[NEXT_TARGET] : event.target;
+		var ret = true;
+		var container = event.currentTarget;
+		var limit = event.currentTarget.parentNode;
+		var defFns = [];
+
+		ret &= triggerDelegatedListeners_(container, currElement, event, limit, defFns);
+		ret &= triggerDefaultDelegatedListeners_(defFns, event);
+
+		event.delegateTarget = null;
+		event[NEXT_TARGET] = limit;
+		return ret;
+	}
+
+	/**
+  * Checks if the given element has the requested css class.
+  * @param {!Element} element
+  * @param {string} className
+  * @return {boolean}
+  */
+	function hasClass(element, className) {
+		if ('classList' in element) {
+			return hasClassWithNative_(element, className);
+		} else {
+			return hasClassWithoutNative_(element, className);
+		}
+	}
+
+	this['metalNamed']['domNamed']['hasClass'] = hasClass; /**
+                                                         * Checks if the given element has the requested css class using classList.
+                                                         * @param {!Element} element
+                                                         * @param {string} className
+                                                         * @return {boolean}
+                                                         * @private
+                                                         */
+
+	function hasClassWithNative_(element, className) {
+		return element.classList.contains(className);
+	}
+
+	/**
+  * Checks if the given element has the requested css class without using classList.
+  * @param {!Element} element
+  * @param {string} className
+  * @return {boolean}
+  * @private
+  */
+	function hasClassWithoutNative_(element, className) {
+		return (' ' + element.className + ' ').indexOf(' ' + className + ' ') >= 0;
+	}
+
+	/**
+  * Checks if the given element is empty or not.
+  * @param {!Element} element
+  * @return {boolean}
+  */
+	function isEmpty(element) {
+		return element.childNodes.length === 0;
+	}
+
+	this['metalNamed']['domNamed']['isEmpty'] = isEmpty; /**
+                                                       * Check if an element matches a given selector.
+                                                       * @param {Element} element
+                                                       * @param {string} selector
+                                                       * @return {boolean}
+                                                       */
+
+	function match(element, selector) {
+		if (!element || element.nodeType !== 1) {
+			return false;
+		}
+
+		var p = Element.prototype;
+		var m = p.matches || p.webkitMatchesSelector || p.mozMatchesSelector || p.msMatchesSelector || p.oMatchesSelector;
+		if (m) {
+			return m.call(element, selector);
+		}
+
+		return matchFallback_(element, selector);
+	}
+
+	this['metalNamed']['domNamed']['match'] = match; /**
+                                                   * Check if an element matches a given selector, using an internal implementation
+                                                   * instead of calling existing javascript functions.
+                                                   * @param {Element} element
+                                                   * @param {string} selector
+                                                   * @return {boolean}
+                                                   * @private
+                                                   */
+
+	function matchFallback_(element, selector) {
+		var nodes = document.querySelectorAll(selector, element.parentNode);
+		for (var i = 0; i < nodes.length; ++i) {
+			if (nodes[i] === element) {
+				return true;
 			}
+		}
+		return false;
+	}
 
-			/**
-    * Adds a value to an array inside an object, creating it first if it doesn't
-    * yet exist.
-    * @param {!Array} arr
-    * @param {string} key
-    * @param {*} value
-    * @protected
-    */
-
-		}, {
-			key: 'addToArr_',
-			value: function addToArr_(arr, key, value) {
-				if (!arr[key]) {
-					arr[key] = [];
-				}
-				arr[key].push(value);
-			}
-
-			/**
-    * Attaches a delegate listener, unless there's already one attached.
-    * @param {!Element} element
-    * @param {string} eventName
-    * @protected
-    */
-
-		}, {
-			key: 'attachDelegateEvent_',
-			value: function attachDelegateEvent_(element, eventName) {
-				var data = domData.get(element);
-				if (!data.delegating[eventName]) {
-					data.delegating[eventName] = {
-						handle: dom.on(element, eventName, dom.handleDelegateEvent_, !!USE_CAPTURE[eventName]),
-						selectors: {}
-					};
-				}
-			}
-
-			/**
-    * Gets the closest element up the tree from the given element (including
-    * itself) that matches the specified selector, or null if none match.
-    * @param {Element} element
-    * @param {string} selector
-    * @return {Element}
-    */
-
-		}, {
-			key: 'closest',
-			value: function closest(element, selector) {
-				while (element && !dom.match(element, selector)) {
-					element = element.parentNode;
-				}
+	/**
+  * Returns the next sibling of the given element that matches the specified
+  * selector, or null if there is none.
+  * @param {!Element} element
+  * @param {?string} selector
+  */
+	function next(element, selector) {
+		do {
+			element = element.nextSibling;
+			if (element && match(element, selector)) {
 				return element;
 			}
+		} while (element);
+		return null;
+	}
 
-			/**
-    * Appends a child node with text or other nodes to a parent node. If
-    * child is a HTML string it will be automatically converted to a document
-    * fragment before appending it to the parent.
-    * @param {!Element} parent The node to append nodes to.
-    * @param {!(Element|NodeList|string)} child The thing to append to the parent.
-    * @return {!Element} The appended child.
-    */
+	this['metalNamed']['domNamed']['next'] = next; /**
+                                                 * Normalizes the event payload for delegate listeners.
+                                                 * @param {!Event} event
+                                                 * @private
+                                                 */
 
-		}, {
-			key: 'append',
-			value: function append(parent, child) {
-				if (core.isString(child)) {
-					child = dom.buildFragment(child);
-				}
-				if (child instanceof NodeList) {
-					var childArr = Array.prototype.slice.call(child);
-					for (var i = 0; i < childArr.length; i++) {
-						parent.appendChild(childArr[i]);
-					}
-				} else {
-					parent.appendChild(child);
-				}
-				return child;
+	function normalizeDelegateEvent_(event) {
+		event.stopPropagation = stopPropagation_;
+		event.stopImmediatePropagation = stopImmediatePropagation_;
+	}
+
+	/**
+  * Listens to the specified event on the given DOM element. This function normalizes
+  * DOM event payloads and functions so they'll work the same way on all supported
+  * browsers.
+  * @param {!Element|string} element The DOM element to listen to the event on, or
+  *   a selector that should be delegated on the entire document.
+  * @param {string} eventName The name of the event to listen to.
+  * @param {!function(!Object)} callback Function to be called when the event is
+  *   triggered. It will receive the normalized event object.
+  * @param {boolean} opt_capture Flag indicating if listener should be triggered
+  *   during capture phase, instead of during the bubbling phase. Defaults to false.
+  * @return {!DomEventHandle} Can be used to remove the listener.
+  */
+	function on(element, eventName, callback, opt_capture) {
+		if (isString(element)) {
+			return delegate(document, eventName, element, callback);
+		}
+		var customConfig = customEvents[eventName];
+		if (customConfig && customConfig.event) {
+			eventName = customConfig.originalEvent;
+			callback = customConfig.handler.bind(customConfig, callback);
+		}
+		element.addEventListener(eventName, callback, opt_capture);
+		return new DomEventHandle(element, eventName, callback, opt_capture);
+	}
+
+	this['metalNamed']['domNamed']['on'] = on; /**
+                                             * Listens to the specified event on the given DOM element once. This
+                                             * function normalizes DOM event payloads and functions so they'll work the
+                                             * same way on all supported browsers.
+                                             * @param {!Element} element The DOM element to listen to the event on.
+                                             * @param {string} eventName The name of the event to listen to.
+                                             * @param {!function(!Object)} callback Function to be called when the event
+                                             *   is triggered. It will receive the normalized event object.
+                                             * @return {!DomEventHandle} Can be used to remove the listener.
+                                             */
+
+	function once(element, eventName, callback) {
+		var domEventHandle = on(element, eventName, function () {
+			domEventHandle.removeListener();
+			return callback.apply(this, arguments);
+		});
+		return domEventHandle;
+	}
+
+	this['metalNamed']['domNamed']['once'] = once; /**
+                                                 * Gets the first parent from the given element that matches the specified
+                                                 * selector, or null if none match.
+                                                 * @param {!Element} element
+                                                 * @param {string} selector
+                                                 * @return {Element}
+                                                 */
+
+	function parent(element, selector) {
+		return closest(element.parentNode, selector);
+	}
+
+	this['metalNamed']['domNamed']['parent'] = parent; /**
+                                                     * Registers a custom event.
+                                                     * @param {string} eventName The name of the custom event.
+                                                     * @param {!Object} customConfig An object with information about how the event
+                                                     *   should be handled.
+                                                     */
+
+	function registerCustomEvent(eventName, customConfig) {
+		customEvents[eventName] = customConfig;
+	}
+
+	this['metalNamed']['domNamed']['registerCustomEvent'] = registerCustomEvent; /**
+                                                                               * Removes all the child nodes on a DOM node.
+                                                                               * @param {Element} node Element to remove children from.
+                                                                               */
+
+	function removeChildren(node) {
+		var child;
+		while (child = node.firstChild) {
+			node.removeChild(child);
+		}
+	}
+
+	this['metalNamed']['domNamed']['removeChildren'] = removeChildren; /**
+                                                                     * Removes the requested CSS classes from an element.
+                                                                     * @param {!Element|!NodeList} elements The element or elements to remove CSS classes from.
+                                                                     * @param {string} classes CSS classes to remove.
+                                                                     */
+
+	function removeClasses(elements, classes) {
+		if (!isObject(elements) || !isString(classes)) {
+			return;
+		}
+
+		if (!elements.length) {
+			elements = [elements];
+		}
+
+		for (var i = 0; i < elements.length; i++) {
+			if ('classList' in elements[i]) {
+				removeClassesWithNative_(elements[i], classes);
+			} else {
+				removeClassesWithoutNative_(elements[i], classes);
 			}
+		}
+	}
 
-			/**
-    * Helper for converting a HTML string into a document fragment.
-    * @param {string} htmlString The HTML string to convert.
-    * @return {!Element} The resulting document fragment.
-    */
+	this['metalNamed']['domNamed']['removeClasses'] = removeClasses; /**
+                                                                   * Removes the requested CSS classes from an element using classList.
+                                                                   * @param {!Element} element The element to remove CSS classes from.
+                                                                   * @param {string} classes CSS classes to remove.
+                                                                   * @private
+                                                                   */
 
-		}, {
-			key: 'buildFragment',
-			value: function buildFragment(htmlString) {
-				var tempDiv = document.createElement('div');
-				tempDiv.innerHTML = '<br>' + htmlString;
-				tempDiv.removeChild(tempDiv.firstChild);
-
-				var fragment = document.createDocumentFragment();
-				while (tempDiv.firstChild) {
-					fragment.appendChild(tempDiv.firstChild);
-				}
-				return fragment;
+	function removeClassesWithNative_(element, classes) {
+		classes.split(' ').forEach(function (className) {
+			if (className) {
+				element.classList.remove(className);
 			}
+		});
+	}
 
-			/**
-    * Checks if the first element contains the second one.
-    * @param {!Element} element1
-    * @param {!Element} element2
-    * @return {boolean}
-    */
+	/**
+  * Removes the requested CSS classes from an element without using classList.
+  * @param {!Element} element The element to remove CSS classes from.
+  * @param {string} classes CSS classes to remove.
+  * @private
+  */
+	function removeClassesWithoutNative_(element, classes) {
+		var elementClassName = ' ' + element.className + ' ';
 
-		}, {
-			key: 'contains',
-			value: function contains(element1, element2) {
-				if (core.isDocument(element1)) {
-					// document.contains is not defined on IE9, so call it on documentElement instead.
-					return element1.documentElement.contains(element2);
-				} else {
-					return element1.contains(element2);
-				}
+		classes = classes.split(' ');
+
+		for (var i = 0; i < classes.length; i++) {
+			elementClassName = elementClassName.replace(' ' + classes[i] + ' ', ' ');
+		}
+
+		element.className = elementClassName.trim();
+	}
+
+	/**
+  * Replaces the first element with the second.
+  * @param {Element} element1
+  * @param {Element} element2
+  */
+	function replace(element1, element2) {
+		if (element1 && element2 && element1 !== element2 && element1.parentNode) {
+			element1.parentNode.insertBefore(element2, element1);
+			element1.parentNode.removeChild(element1);
+		}
+	}
+
+	this['metalNamed']['domNamed']['replace'] = replace; /**
+                                                       * The function that replaces `stopImmediatePropagation_` for events.
+                                                       * @private
+                                                       */
+
+	function stopImmediatePropagation_() {
+		var event = this; // jshint ignore:line
+		event.stopped = true;
+		event.stoppedImmediate = true;
+		Event.prototype.stopImmediatePropagation.call(event);
+	}
+
+	/**
+  * The function that replaces `stopPropagation` for events.
+  * @private
+  */
+	function stopPropagation_() {
+		var event = this; // jshint ignore:line
+		event.stopped = true;
+		Event.prototype.stopPropagation.call(event);
+	}
+
+	/**
+  * Checks if the given element supports the given event type.
+  * @param {!Element|string} element The DOM element or element tag name to check.
+  * @param {string} eventName The name of the event to check.
+  * @return {boolean}
+  */
+	function supportsEvent(element, eventName) {
+		if (customEvents[eventName]) {
+			return true;
+		}
+
+		if (isString(element)) {
+			if (!elementsByTag_[element]) {
+				elementsByTag_[element] = document.createElement(element);
 			}
+			element = elementsByTag_[element];
+		}
+		return 'on' + eventName in element;
+	}
 
-			/**
-    * Listens to the specified event on the given DOM element, but only calls the
-    * given callback listener when it's triggered by elements that match the
-    * given selector or target element.
-    * @param {!Element} element The DOM element the event should be listened on.
-    * @param {string} eventName The name of the event to listen to.
-    * @param {!Element|string} selectorOrTarget Either an element or css selector
-    *     that should match the event for the listener to be triggered.
-    * @param {!function(!Object)} callback Function to be called when the event
-    *     is triggered. It will receive the normalized event object.
-    * @param {boolean=} opt_default Optional flag indicating if this is a default
-    *     listener. That means that it would only be executed after all non
-    *     default listeners, and only if the event isn't prevented via
-    *     `preventDefault`.
-    * @return {!EventHandle} Can be used to remove the listener.
-    */
+	this['metalNamed']['domNamed']['supportsEvent'] = supportsEvent; /**
+                                                                   * This triggers all default matched delegated listeners of a given event type.
+                                                                   * @param {!Array} defaultFns Array to collect default listeners in, instead
+                                                                   * @param {!Event} event
+                                                                   * @return {boolean} False if at least one of the triggered callbacks returns
+                                                                   *     false, or true otherwise.
+                                                                   * @private
+                                                                   */
 
-		}, {
-			key: 'delegate',
-			value: function delegate(element, eventName, selectorOrTarget, callback, opt_default) {
-				var customConfig = dom.customEvents[eventName];
-				if (customConfig && customConfig.delegate) {
-					eventName = customConfig.originalEvent;
-					callback = customConfig.handler.bind(customConfig, callback);
-				}
+	function triggerDefaultDelegatedListeners_(defFns, event) {
+		var ret = true;
 
-				if (opt_default) {
-					// Wrap callback so we don't set property directly on it.
-					callback = callback.bind();
-					callback.defaultListener_ = true;
-				}
+		for (var i = 0; i < defFns.length && !event.defaultPrevented; i++) {
+			event.delegateTarget = defFns[i].element;
+			ret &= defFns[i].fn(event);
+		}
 
-				dom.attachDelegateEvent_(element, eventName);
-				if (core.isString(selectorOrTarget)) {
-					dom.addSelectorListener_(element, eventName, selectorOrTarget, callback);
-				} else {
-					dom.addElementListener_(selectorOrTarget, eventName, callback);
-				}
+		return ret;
+	}
 
-				return new DomDelegatedEventHandle(core.isString(selectorOrTarget) ? element : selectorOrTarget, eventName, callback, core.isString(selectorOrTarget) ? selectorOrTarget : null);
+	/**
+  * This triggers all matched delegated listeners of a given event type when its
+  * delegated target is able to interact.
+  * @param {!Element} container
+  * @param {!Element} currElement
+  * @param {!Event} event
+  * @param {!Element} limit the fartest parent of the given element
+  * @param {!Array} defaultFns Array to collect default listeners in, instead
+  *     of running them.
+  * @return {boolean} False if at least one of the triggered callbacks returns
+  *     false, or true otherwise.
+  * @private
+  */
+	function triggerDelegatedListeners_(container, currElement, event, limit, defaultFns) {
+		var ret = true;
+
+		while (currElement && currElement !== limit && !event.stopped) {
+			if (isAbleToInteractWith_(currElement, event.type, event)) {
+				event.delegateTarget = currElement;
+				ret &= triggerMatchedListeners_(container, currElement, event, defaultFns);
 			}
+			currElement = currElement.parentNode;
+		}
 
-			/**
-    * Inserts node in document as last element.
-    * @param {Element} node Element to remove children from.
-    */
+		return ret;
+	}
 
-		}, {
-			key: 'enterDocument',
-			value: function enterDocument(node) {
-				node && dom.append(document.body, node);
+	/**
+  * Converts the given argument to a DOM element. Strings are assumed to
+  * be selectors, and so a matched element will be returned. If the arg
+  * is already a DOM element it will be the return value.
+  * @param {string|Element|Document} selectorOrElement
+  * @return {Element} The converted element, or null if none was found.
+  */
+	function toElement(selectorOrElement) {
+		if (isElement(selectorOrElement) || isDocument(selectorOrElement)) {
+			return selectorOrElement;
+		} else if (isString(selectorOrElement)) {
+			if (selectorOrElement[0] === '#' && selectorOrElement.indexOf(' ') === -1) {
+				return document.getElementById(selectorOrElement.substr(1));
+			} else {
+				return document.querySelector(selectorOrElement);
 			}
+		} else {
+			return null;
+		}
+	}
 
-			/**
-    * Removes node from document.
-    * @param {Element} node Element to remove children from.
-    */
+	this['metalNamed']['domNamed']['toElement'] = toElement; /**
+                                                           * Adds or removes one or more classes from an element. If any of the classes
+                                                           * is present, it will be removed from the element, or added otherwise.
+                                                           * @param {!Element} element The element which classes will be toggled.
+                                                           * @param {string} classes The classes which have to added or removed from the element.
+                                                           */
 
-		}, {
-			key: 'exitDocument',
-			value: function exitDocument(node) {
-				if (node && node.parentNode) {
-					node.parentNode.removeChild(node);
-				}
+	function toggleClasses(element, classes) {
+		if (!isObject(element) || !isString(classes)) {
+			return;
+		}
+
+		if ('classList' in element) {
+			toggleClassesWithNative_(element, classes);
+		} else {
+			toggleClassesWithoutNative_(element, classes);
+		}
+	}
+
+	this['metalNamed']['domNamed']['toggleClasses'] = toggleClasses; /**
+                                                                   * Adds or removes one or more classes from an element using classList.
+                                                                   * If any of the classes is present, it will be removed from the element,
+                                                                   * or added otherwise.
+                                                                   * @param {!Element} element The element which classes will be toggled.
+                                                                   * @param {string} classes The classes which have to added or removed from the element.
+                                                                   * @private
+                                                                   */
+
+	function toggleClassesWithNative_(element, classes) {
+		classes.split(' ').forEach(function (className) {
+			element.classList.toggle(className);
+		});
+	}
+
+	/**
+  * Adds or removes one or more classes from an element without using classList.
+  * If any of the classes is present, it will be removed from the element,
+  * or added otherwise.
+  * @param {!Element} element The element which classes will be toggled.
+  * @param {string} classes The classes which have to added or removed from the element.
+  * @private
+  */
+	function toggleClassesWithoutNative_(element, classes) {
+		var elementClassName = ' ' + element.className + ' ';
+
+		classes = classes.split(' ');
+
+		for (var i = 0; i < classes.length; i++) {
+			var className = ' ' + classes[i] + ' ';
+			var classIndex = elementClassName.indexOf(className);
+
+			if (classIndex === -1) {
+				elementClassName = elementClassName + classes[i] + ' ';
+			} else {
+				elementClassName = elementClassName.substring(0, classIndex) + ' ' + elementClassName.substring(classIndex + className.length);
 			}
+		}
 
-			/**
-    * This is called when an event is triggered by a delegate listener. All
-    * matching listeners of this event type from `target` to `currentTarget` will
-    * be triggered.
-    * @param {!Event} event The event payload.
-    * @return {boolean} False if at least one of the triggered callbacks returns
-    *     false, or true otherwise.
-    * @protected
-    */
+		element.className = elementClassName.trim();
+	}
 
-		}, {
-			key: 'handleDelegateEvent_',
-			value: function handleDelegateEvent_(event) {
-				dom.normalizeDelegateEvent_(event);
-				var currElement = core.isDef(event[NEXT_TARGET]) ? event[NEXT_TARGET] : event.target;
-				var ret = true;
-				var container = event.currentTarget;
-				var limit = event.currentTarget.parentNode;
-				var defFns = [];
+	/**
+  * Triggers the specified event on the given element.
+  * NOTE: This should mostly be used for testing, not on real code.
+  * @param {!Element} element The node that should trigger the event.
+  * @param {string} eventName The name of the event to be triggred.
+  * @param {Object=} opt_eventObj An object with data that should be on the
+  *   triggered event's payload.
+  */
+	function triggerEvent(element, eventName, opt_eventObj) {
+		if (isAbleToInteractWith_(element, eventName, opt_eventObj)) {
+			var eventObj = document.createEvent('HTMLEvents');
+			eventObj.initEvent(eventName, true, true);
+			object.mixin(eventObj, opt_eventObj);
+			element.dispatchEvent(eventObj);
+		}
+	}
 
-				while (currElement && currElement !== limit && !event.stopped) {
-					event.delegateTarget = currElement;
-					ret &= dom.triggerMatchedListeners_(container, currElement, event, defFns);
-					currElement = currElement.parentNode;
-				}
+	this['metalNamed']['domNamed']['triggerEvent'] = triggerEvent; /**
+                                                                 * Triggers the given listeners array.
+                                                                 * @param {Array<!function()>} listeners
+                                                                 * @param {!Event} event
+                                                                 * @param {!Element} element
+                                                                 * @param {!Array} defaultFns Array to collect default listeners in, instead
+                                                                 *     of running them.
+                                                                 * @return {boolean} False if at least one of the triggered callbacks returns
+                                                                 *     false, or true otherwise.
+                                                                 * @private
+                                                                 */
 
-				for (var i = 0; i < defFns.length && !event.defaultPrevented; i++) {
-					event.delegateTarget = defFns[i].element;
-					ret &= defFns[i].fn(event);
-				}
-
-				event.delegateTarget = null;
-				event[NEXT_TARGET] = limit;
-				return ret;
-			}
-
-			/**
-    * Checks if the given element has the requested css class.
-    * @param {!Element} element
-    * @param {string} className
-    * @return {boolean}
-    */
-
-		}, {
-			key: 'hasClass',
-			value: function hasClass(element, className) {
-				if ('classList' in element) {
-					return dom.hasClassWithNative_(element, className);
-				} else {
-					return dom.hasClassWithoutNative_(element, className);
-				}
-			}
-
-			/**
-    * Checks if the given element has the requested css class using classList.
-    * @param {!Element} element
-    * @param {string} className
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'hasClassWithNative_',
-			value: function hasClassWithNative_(element, className) {
-				return element.classList.contains(className);
-			}
-
-			/**
-    * Checks if the given element has the requested css class without using classList.
-    * @param {!Element} element
-    * @param {string} className
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'hasClassWithoutNative_',
-			value: function hasClassWithoutNative_(element, className) {
-				return (' ' + element.className + ' ').indexOf(' ' + className + ' ') >= 0;
-			}
-
-			/**
-    * Checks if the given element is empty or not.
-    * @param {!Element} element
-    * @return {boolean}
-    */
-
-		}, {
-			key: 'isEmpty',
-			value: function isEmpty(element) {
-				return element.childNodes.length === 0;
-			}
-
-			/**
-    * Check if an element matches a given selector.
-    * @param {Element} element
-    * @param {string} selector
-    * @return {boolean}
-    */
-
-		}, {
-			key: 'match',
-			value: function match(element, selector) {
-				if (!element || element.nodeType !== 1) {
-					return false;
-				}
-
-				var p = Element.prototype;
-				var m = p.matches || p.webkitMatchesSelector || p.mozMatchesSelector || p.msMatchesSelector || p.oMatchesSelector;
-				if (m) {
-					return m.call(element, selector);
-				}
-
-				return dom.matchFallback_(element, selector);
-			}
-
-			/**
-    * Check if an element matches a given selector, using an internal implementation
-    * instead of calling existing javascript functions.
-    * @param {Element} element
-    * @param {string} selector
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'matchFallback_',
-			value: function matchFallback_(element, selector) {
-				var nodes = document.querySelectorAll(selector, element.parentNode);
-				for (var i = 0; i < nodes.length; ++i) {
-					if (nodes[i] === element) {
-						return true;
-					}
-				}
-				return false;
-			}
-
-			/**
-    * Returns the next sibling of the given element that matches the specified
-    * selector, or null if there is none.
-    * @param {!Element} element
-    * @param {?string} selector
-    */
-
-		}, {
-			key: 'next',
-			value: function next(element, selector) {
-				do {
-					element = element.nextSibling;
-					if (element && dom.match(element, selector)) {
-						return element;
-					}
-				} while (element);
-				return null;
-			}
-
-			/**
-    * Normalizes the event payload for delegate listeners.
-    * @param {!Event} event
-    */
-
-		}, {
-			key: 'normalizeDelegateEvent_',
-			value: function normalizeDelegateEvent_(event) {
-				event.stopPropagation = dom.stopPropagation_;
-				event.stopImmediatePropagation = dom.stopImmediatePropagation_;
-			}
-
-			/**
-    * Listens to the specified event on the given DOM element. This function normalizes
-    * DOM event payloads and functions so they'll work the same way on all supported
-    * browsers.
-    * @param {!Element|string} element The DOM element to listen to the event on, or
-    *   a selector that should be delegated on the entire document.
-    * @param {string} eventName The name of the event to listen to.
-    * @param {!function(!Object)} callback Function to be called when the event is
-    *   triggered. It will receive the normalized event object.
-    * @param {boolean} opt_capture Flag indicating if listener should be triggered
-    *   during capture phase, instead of during the bubbling phase. Defaults to false.
-    * @return {!DomEventHandle} Can be used to remove the listener.
-    */
-
-		}, {
-			key: 'on',
-			value: function on(element, eventName, callback, opt_capture) {
-				if (core.isString(element)) {
-					return dom.delegate(document, eventName, element, callback);
-				}
-				var customConfig = dom.customEvents[eventName];
-				if (customConfig && customConfig.event) {
-					eventName = customConfig.originalEvent;
-					callback = customConfig.handler.bind(customConfig, callback);
-				}
-				element.addEventListener(eventName, callback, opt_capture);
-				return new DomEventHandle(element, eventName, callback, opt_capture);
-			}
-
-			/**
-    * Listens to the specified event on the given DOM element once. This
-    * function normalizes DOM event payloads and functions so they'll work the
-    * same way on all supported browsers.
-    * @param {!Element} element The DOM element to listen to the event on.
-    * @param {string} eventName The name of the event to listen to.
-    * @param {!function(!Object)} callback Function to be called when the event
-    *   is triggered. It will receive the normalized event object.
-    * @return {!DomEventHandle} Can be used to remove the listener.
-    */
-
-		}, {
-			key: 'once',
-			value: function once(element, eventName, callback) {
-				var domEventHandle = this.on(element, eventName, function () {
-					domEventHandle.removeListener();
-					return callback.apply(this, arguments);
+	function triggerListeners_(listeners, event, element, defaultFns) {
+		var ret = true;
+		listeners = listeners || [];
+		for (var i = 0; i < listeners.length && !event.stoppedImmediate; i++) {
+			if (listeners[i].defaultListener_) {
+				defaultFns.push({
+					element: element,
+					fn: listeners[i]
 				});
-				return domEventHandle;
+			} else {
+				ret &= listeners[i](event);
 			}
+		}
+		return ret;
+	}
 
-			/**
-    * Gets the first parent from the given element that matches the specified
-    * selector, or null if none match.
-    * @param {!Element} element
-    * @param {string} selector
-    * @return {Element}
-    */
+	/**
+  * Triggers all listeners for the given event type that are stored in the
+  * specified element.
+  * @param {!Element} container
+  * @param {!Element} element
+  * @param {!Event} event
+  * @param {!Array} defaultFns Array to collect default listeners in, instead
+  *     of running them.
+  * @return {boolean} False if at least one of the triggered callbacks returns
+  *     false, or true otherwise.
+  * @private
+  */
+	function triggerMatchedListeners_(container, element, event, defaultFns) {
+		var data = domData.get(element);
+		var listeners = data.listeners[event.type];
+		var ret = triggerListeners_(listeners, event, element, defaultFns);
 
-		}, {
-			key: 'parent',
-			value: function parent(element, selector) {
-				return dom.closest(element.parentNode, selector);
+		var selectorsMap = domData.get(container).delegating[event.type].selectors;
+		var selectors = Object.keys(selectorsMap);
+		for (var i = 0; i < selectors.length && !event.stoppedImmediate; i++) {
+			if (match(element, selectors[i])) {
+				listeners = selectorsMap[selectors[i]];
+				ret &= triggerListeners_(listeners, event, element, defaultFns);
 			}
+		}
 
-			/**
-    * Registers a custom event.
-    * @param {string} eventName The name of the custom event.
-    * @param {!Object} customConfig An object with information about how the event
-    *   should be handled.
-    */
+		return ret;
+	}
+}).call(this);
+'use strict';
 
-		}, {
-			key: 'registerCustomEvent',
-			value: function registerCustomEvent(eventName, customConfig) {
-				dom.customEvents[eventName] = customConfig;
-			}
+// This file exists just for backwards compatibility, making sure that old
+// default imports for this file still work. It's best to use the named exports
+// for each function instead though, since that allows bundlers like Rollup to
+// reduce the bundle size by removing unused code.
 
-			/**
-    * Removes all the child nodes on a DOM node.
-    * @param {Element} node Element to remove children from.
-    */
-
-		}, {
-			key: 'removeChildren',
-			value: function removeChildren(node) {
-				var child;
-				while (child = node.firstChild) {
-					node.removeChild(child);
-				}
-			}
-
-			/**
-    * Removes the requested CSS classes from an element.
-    * @param {!Element} element The element to remove CSS classes from.
-    * @param {string} classes CSS classes to remove.
-    */
-
-		}, {
-			key: 'removeClasses',
-			value: function removeClasses(element, classes) {
-				if (!core.isObject(element) || !core.isString(classes)) {
-					return;
-				}
-
-				if ('classList' in element) {
-					dom.removeClassesWithNative_(element, classes);
-				} else {
-					dom.removeClassesWithoutNative_(element, classes);
-				}
-			}
-
-			/**
-    * Removes the requested CSS classes from an element using classList.
-    * @param {!Element} element The element to remove CSS classes from.
-    * @param {string} classes CSS classes to remove.
-    * @protected
-    */
-
-		}, {
-			key: 'removeClassesWithNative_',
-			value: function removeClassesWithNative_(element, classes) {
-				classes.split(' ').forEach(function (className) {
-					if (className) {
-						element.classList.remove(className);
-					}
-				});
-			}
-
-			/**
-    * Removes the requested CSS classes from an element without using classList.
-    * @param {!Element} element The element to remove CSS classes from.
-    * @param {string} classes CSS classes to remove.
-    * @protected
-    */
-
-		}, {
-			key: 'removeClassesWithoutNative_',
-			value: function removeClassesWithoutNative_(element, classes) {
-				var elementClassName = ' ' + element.className + ' ';
-
-				classes = classes.split(' ');
-
-				for (var i = 0; i < classes.length; i++) {
-					elementClassName = elementClassName.replace(' ' + classes[i] + ' ', ' ');
-				}
-
-				element.className = elementClassName.trim();
-			}
-
-			/**
-    * Replaces the first element with the second.
-    * @param {Element} element1
-    * @param {Element} element2
-    */
-
-		}, {
-			key: 'replace',
-			value: function replace(element1, element2) {
-				if (element1 && element2 && element1 !== element2 && element1.parentNode) {
-					element1.parentNode.insertBefore(element2, element1);
-					element1.parentNode.removeChild(element1);
-				}
-			}
-
-			/**
-    * The function that replaces `stopImmediatePropagation_` for events.
-    * @protected
-    */
-
-		}, {
-			key: 'stopImmediatePropagation_',
-			value: function stopImmediatePropagation_() {
-				this.stopped = true;
-				this.stoppedImmediate = true;
-				Event.prototype.stopImmediatePropagation.call(this);
-			}
-
-			/**
-    * The function that replaces `stopPropagation` for events.
-    * @protected
-    */
-
-		}, {
-			key: 'stopPropagation_',
-			value: function stopPropagation_() {
-				this.stopped = true;
-				Event.prototype.stopPropagation.call(this);
-			}
-
-			/**
-    * Checks if the given element supports the given event type.
-    * @param {!Element|string} element The DOM element or element tag name to check.
-    * @param {string} eventName The name of the event to check.
-    * @return {boolean}
-    */
-
-		}, {
-			key: 'supportsEvent',
-			value: function supportsEvent(element, eventName) {
-				if (dom.customEvents[eventName]) {
-					return true;
-				}
-
-				if (core.isString(element)) {
-					if (!elementsByTag[element]) {
-						elementsByTag[element] = document.createElement(element);
-					}
-					element = elementsByTag[element];
-				}
-				return 'on' + eventName in element;
-			}
-
-			/**
-    * Converts the given argument to a DOM element. Strings are assumed to
-    * be selectors, and so a matched element will be returned. If the arg
-    * is already a DOM element it will be the return value.
-    * @param {string|Element|Document} selectorOrElement
-    * @return {Element} The converted element, or null if none was found.
-    */
-
-		}, {
-			key: 'toElement',
-			value: function toElement(selectorOrElement) {
-				if (core.isElement(selectorOrElement) || core.isDocument(selectorOrElement)) {
-					return selectorOrElement;
-				} else if (core.isString(selectorOrElement)) {
-					if (selectorOrElement[0] === '#' && selectorOrElement.indexOf(' ') === -1) {
-						return document.getElementById(selectorOrElement.substr(1));
-					} else {
-						return document.querySelector(selectorOrElement);
-					}
-				} else {
-					return null;
-				}
-			}
-
-			/**
-    * Adds or removes one or more classes from an element. If any of the classes
-    * is present, it will be removed from the element, or added otherwise.
-    * @param {!Element} element The element which classes will be toggled.
-    * @param {string} classes The classes which have to added or removed from the element.
-    */
-
-		}, {
-			key: 'toggleClasses',
-			value: function toggleClasses(element, classes) {
-				if (!core.isObject(element) || !core.isString(classes)) {
-					return;
-				}
-
-				if ('classList' in element) {
-					dom.toggleClassesWithNative_(element, classes);
-				} else {
-					dom.toggleClassesWithoutNative_(element, classes);
-				}
-			}
-
-			/**
-    * Adds or removes one or more classes from an element using classList.
-    * If any of the classes is present, it will be removed from the element,
-    * or added otherwise.
-    * @param {!Element} element The element which classes will be toggled.
-    * @param {string} classes The classes which have to added or removed from the element.
-    */
-
-		}, {
-			key: 'toggleClassesWithNative_',
-			value: function toggleClassesWithNative_(element, classes) {
-				classes.split(' ').forEach(function (className) {
-					element.classList.toggle(className);
-				});
-			}
-
-			/**
-    * Adds or removes one or more classes from an element without using classList.
-    * If any of the classes is present, it will be removed from the element,
-    * or added otherwise.
-    * @param {!Element} element The element which classes will be toggled.
-    * @param {string} classes The classes which have to added or removed from the element.
-    */
-
-		}, {
-			key: 'toggleClassesWithoutNative_',
-			value: function toggleClassesWithoutNative_(element, classes) {
-				var elementClassName = ' ' + element.className + ' ';
-
-				classes = classes.split(' ');
-
-				for (var i = 0; i < classes.length; i++) {
-					var className = ' ' + classes[i] + ' ';
-					var classIndex = elementClassName.indexOf(className);
-
-					if (classIndex === -1) {
-						elementClassName = elementClassName + classes[i] + ' ';
-					} else {
-						elementClassName = elementClassName.substring(0, classIndex) + ' ' + elementClassName.substring(classIndex + className.length);
-					}
-				}
-
-				element.className = elementClassName.trim();
-			}
-
-			/**
-    * Triggers the specified event on the given element.
-    * NOTE: This should mostly be used for testing, not on real code.
-    * @param {!Element} element The node that should trigger the event.
-    * @param {string} eventName The name of the event to be triggred.
-    * @param {Object=} opt_eventObj An object with data that should be on the
-    *   triggered event's payload.
-    */
-
-		}, {
-			key: 'triggerEvent',
-			value: function triggerEvent(element, eventName, opt_eventObj) {
-				var eventObj = document.createEvent('HTMLEvents');
-				eventObj.initEvent(eventName, true, true);
-				object.mixin(eventObj, opt_eventObj);
-				element.dispatchEvent(eventObj);
-			}
-
-			/**
-    * Triggers the given listeners array.
-    * @param {Array<!function()} listeners
-    * @param {!Event} event
-    * @param {!Element} element
-    * @param {!Array} defaultFns Array to collect default listeners in, instead
-    *     of running them.
-    * @return {boolean} False if at least one of the triggered callbacks returns
-    *     false, or true otherwise.
-    * @protected
-    */
-
-		}, {
-			key: 'triggerListeners_',
-			value: function triggerListeners_(listeners, event, element, defaultFns) {
-				var ret = true;
-				listeners = listeners || [];
-				for (var i = 0; i < listeners.length && !event.stoppedImmediate; i++) {
-					if (listeners[i].defaultListener_) {
-						defaultFns.push({
-							element: element,
-							fn: listeners[i]
-						});
-					} else {
-						ret &= listeners[i](event);
-					}
-				}
-				return ret;
-			}
-
-			/**
-    * Triggers all listeners for the given event type that are stored in the
-    * specified element.
-    * @param {!Element} container
-    * @param {!Element} element
-    * @param {!Event} event
-    * @param {!Array} defaultFns Array to collect default listeners in, instead
-    *     of running them.
-    * @return {boolean} False if at least one of the triggered callbacks returns
-    *     false, or true otherwise.
-    * @protected
-    */
-
-		}, {
-			key: 'triggerMatchedListeners_',
-			value: function triggerMatchedListeners_(container, element, event, defaultFns) {
-				var data = domData.get(element);
-				var listeners = data.listeners[event.type];
-				var ret = dom.triggerListeners_(listeners, event, element, defaultFns);
-
-				var selectorsMap = domData.get(container).delegating[event.type].selectors;
-				var selectors = Object.keys(selectorsMap);
-				for (var i = 0; i < selectors.length && !event.stoppedImmediate; i++) {
-					if (dom.match(element, selectors[i])) {
-						listeners = selectorsMap[selectors[i]];
-						ret &= dom.triggerListeners_(listeners, event, element, defaultFns);
-					}
-				}
-
-				return ret;
-			}
-		}]);
-		return dom;
-	}();
-
-	var elementsByTag = {};
-	dom.customEvents = {};
-
-	this['metal']['dom'] = dom;
+(function () {
+  var dom = this['metalNamed']['domNamed'];
+  this['metal']['dom'] = dom;
+  this['metalNamed']['dom'] = this['metalNamed']['dom'] || {};
+  this['metalNamed']['dom']['dom'] = dom;
+  Object.keys(this['metalNamed']['domNamed']).forEach(function (key) {
+    this['metalNamed']['dom'][key] = this['metalNamed']['domNamed'][key];
+  });
 }).call(this);
 'use strict';
 
 (function () {
-	var dom = this['metal']['dom'];
+	var delegate = this['metalNamed']['dom']['delegate'];
+	var on = this['metalNamed']['dom']['on'];
+	var supportsEvent = this['metalNamed']['dom']['supportsEvent'];
 	var EventEmitterProxy = this['metalNamed']['events']['EventEmitterProxy'];
 
 	/**
@@ -2894,7 +2917,7 @@ babelHelpers;
 
 			/**
     * Adds the given listener for the given event.
-    * @param {string} event.
+    * @param {string} event
     * @param {!function()} listener
     * @return {!EventHandle} The listened event's handle.
     * @protected
@@ -2906,9 +2929,9 @@ babelHelpers;
 						var index = event.indexOf(':', 9);
 						var eventName = event.substring(9, index);
 						var selector = event.substring(index + 1);
-						return dom.delegate(this.originEmitter_, eventName, selector, listener);
+						return delegate(this.originEmitter_, eventName, selector, listener);
 					} else {
-						return dom.on(this.originEmitter_, event, listener);
+						return on(this.originEmitter_, event, listener);
 					}
 				} else {
 					return babelHelpers.get(DomEventEmitterProxy.prototype.__proto__ || Object.getPrototypeOf(DomEventEmitterProxy.prototype), 'addListener_', this).call(this, event, listener);
@@ -2940,7 +2963,7 @@ babelHelpers;
 				if (!this.originEmitter_ || !this.originEmitter_.addEventListener) {
 					return true;
 				}
-				return this.isDelegateEvent_(event) && event.indexOf(':', 9) !== -1 || dom.supportsEvent(this.originEmitter_, event);
+				return this.isDelegateEvent_(event) && event.indexOf(':', 9) !== -1 || supportsEvent(this.originEmitter_, event);
 			}
 
 			/**
@@ -2965,7 +2988,7 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var dom = this['metal']['dom'];
+	var append = this['metalNamed']['dom']['append'];
 	var string = this['metalNamed']['metal']['string'];
 
 	/**
@@ -3029,7 +3052,7 @@ babelHelpers;
 				if (features.attrOrderChange_ === undefined) {
 					var originalContent = '<div data-component="" data-ref=""></div>';
 					var element = document.createElement('div');
-					dom.append(element, originalContent);
+					append(element, originalContent);
 					features.attrOrderChange_ = originalContent !== element.innerHTML;
 				}
 				return features.attrOrderChange_;
@@ -3048,7 +3071,8 @@ babelHelpers;
 
 (function () {
 	var async = this['metalNamed']['metal']['async'];
-	var dom = this['metal']['dom'];
+	var exitDocument = this['metalNamed']['dom']['exitDocument'];
+	var once = this['metalNamed']['dom']['once'];
 
 	/**
   * Utility functions for running javascript code in the global scope.
@@ -3077,7 +3101,7 @@ babelHelpers;
 				} else {
 					document.head.appendChild(script);
 				}
-				dom.exitDocument(script);
+				exitDocument(script);
 				return script;
 			}
 
@@ -3098,11 +3122,11 @@ babelHelpers;
 				script.src = src;
 
 				var callback = function callback() {
-					dom.exitDocument(script);
+					exitDocument(script);
 					opt_callback && opt_callback();
 				};
-				dom.once(script, 'load', callback);
-				dom.once(script, 'error', callback);
+				once(script, 'load', callback);
+				once(script, 'error', callback);
 
 				if (opt_appendFn) {
 					opt_appendFn(script);
@@ -3133,7 +3157,7 @@ babelHelpers;
 					async.nextTick(callback);
 					return;
 				}
-				dom.exitDocument(script);
+				exitDocument(script);
 				if (script.src) {
 					return globalEval.runFile(script.src, opt_callback, opt_appendFn);
 				} else {
@@ -3144,7 +3168,7 @@ babelHelpers;
 
 			/**
     * Evaluates any script tags present in the given element.
-    * @params {!Element} element
+    * @param {!Element} element
     * @param {function()=} opt_callback Optional function to be called
     *   when the script has been run.
     * @param {function()=} opt_appendFn Optional function to append the node
@@ -3193,7 +3217,7 @@ babelHelpers;
 
 (function () {
 	var async = this['metalNamed']['metal']['async'];
-	var dom = this['metal']['dom'];
+	var once = this['metalNamed']['dom']['once'];
 
 	/**
   * Utility functions for running styles.
@@ -3269,8 +3293,8 @@ babelHelpers;
 				if (style.tagName === 'STYLE') {
 					async.nextTick(callback);
 				} else {
-					dom.once(style, 'load', callback);
-					dom.once(style, 'error', callback);
+					once(style, 'load', callback);
+					once(style, 'error', callback);
 				}
 
 				if (opt_appendFn) {
@@ -3284,7 +3308,7 @@ babelHelpers;
 
 			/**
     * Evaluates any style present in the given element.
-    * @params {!Element} element
+    * @param {!Element} element
     * @param {function()=} opt_callback Optional function to be called when the
     *   style has been run.
     * @param {function()=} opt_appendFn Optional function to append the node
@@ -3319,7 +3343,7 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var dom = this['metal']['dom'];
+	var registerCustomEvent = this['metalNamed']['dom']['registerCustomEvent'];
 	var features = this['metal']['features'];
 
 
@@ -3330,7 +3354,7 @@ babelHelpers;
 		pointerleave: 'pointerout'
 	};
 	Object.keys(mouseEventMap).forEach(function (eventName) {
-		dom.registerCustomEvent(eventName, {
+		registerCustomEvent(eventName, {
 			delegate: true,
 			handler: function handler(callback, event) {
 				var related = event.relatedTarget;
@@ -3350,7 +3374,7 @@ babelHelpers;
 	};
 	Object.keys(animationEventMap).forEach(function (eventType) {
 		var eventName = animationEventMap[eventType];
-		dom.registerCustomEvent(eventName, {
+		registerCustomEvent(eventName, {
 			event: true,
 			delegate: true,
 			handler: function handler(callback, event) {
@@ -3371,200 +3395,363 @@ babelHelpers;
   var features = this['metal']['features'];
   var globalEval = this['metal']['globalEval'];
   var globalEvalStyles = this['metal']['globalEvalStyles'];
-  this['metal']['dom'] = dom;
   this['metalNamed']['dom'] = this['metalNamed']['dom'] || {};
-  this['metalNamed']['dom']['dom'] = dom;
+  Object.keys(this['metalNamed']['dom']).forEach(function (key) {
+    this['metalNamed']['dom'][key] = this['metalNamed']['dom'][key];
+  });
   this['metalNamed']['dom']['domData'] = domData;
   this['metalNamed']['dom']['DomEventEmitterProxy'] = DomEventEmitterProxy;
   this['metalNamed']['dom']['DomEventHandle'] = DomEventHandle;
   this['metalNamed']['dom']['features'] = features;
   this['metalNamed']['dom']['globalEval'] = globalEval;
   this['metalNamed']['dom']['globalEvalStyles'] = globalEvalStyles;
+  this['metal']['dom'] = dom;
 }).call(this);
 'use strict';
 
 (function () {
-	var EventEmitter = this['metalNamed']['events']['EventEmitter'];
-	var EventHandler = this['metalNamed']['events']['EventHandler'];
+	var getFunctionName = this['metalNamed']['metal']['getFunctionName'];
+	var isDef = this['metalNamed']['metal']['isDef'];
+	var isDefAndNotNull = this['metalNamed']['metal']['isDefAndNotNull'];
+	var isNull = this['metalNamed']['metal']['isNull'];
 
 	/**
-  * Base class that component renderers should extend from. It defines the
-  * required methods all renderers should have.
+  * Provides access to various type validators that will return an
+  * instance of Error when validation fails. Note that all type validators
+  * will also accept null or undefined values. To not accept these you should
+  * instead make your state property required.
   */
 
-	var ComponentRenderer = function (_EventEmitter) {
-		babelHelpers.inherits(ComponentRenderer, _EventEmitter);
+	var validators = {
+		any: function any() {
+			return function () {
+				return true;
+			};
+		},
+		array: validateType('array'),
+		bool: validateType('boolean'),
+		func: validateType('function'),
+		number: validateType('number'),
+		object: validateType('object'),
+		string: validateType('string'),
 
 		/**
-   * Constructor function for `ComponentRenderer`.
-   * @param {!Component} component The component that this renderer is
-   *     responsible for.
+   * Creates a validator that checks the values of an array against a type.
+   * @param {function()} validator Type validator to check each index against.
+   * @return {function()} Validator.
    */
-		function ComponentRenderer(component) {
-			babelHelpers.classCallCheck(this, ComponentRenderer);
+		arrayOf: function arrayOf(validator) {
+			return maybe(function (value, name, context) {
+				var result = validators.array(value, name, context);
+				if (isInvalid(result)) {
+					return result;
+				}
+				for (var i = 0; i < value.length; i++) {
+					if (isInvalid(validator(value[i], name, context))) {
+						return composeError('Expected an array of single type', name, context);
+					}
+				}
+				return true;
+			});
+		},
 
-			var _this = babelHelpers.possibleConstructorReturn(this, (ComponentRenderer.__proto__ || Object.getPrototypeOf(ComponentRenderer)).call(this));
+		/**
+   * Creates a validator that compares a value to a specific class.
+   * @param {function()} expectedClass Class to check value against.
+   * @return {function()} Validator.
+   */
+		instanceOf: function instanceOf(expectedClass) {
+			return maybe(function (value, name, context) {
+				if (!(value instanceof expectedClass)) {
+					return composeError('Expected instance of ' + expectedClass, name, context);
+				}
+				return true;
+			});
+		},
 
-			_this.component_ = component;
+		/**
+   * Creates a validator that checks the values of an object against a type.
+   * @param {function()} typeValidator Validator to check value against.
+   * @return {function()} Validator.
+   */
+		objectOf: function objectOf(typeValidator) {
+			return maybe(function (value, name, context) {
+				for (var key in value) {
+					if (isInvalid(typeValidator(value[key]))) {
+						return composeError('Expected object of one type', name, context);
+					}
+				}
+				return true;
+			});
+		},
 
-			_this.componentRendererEvents_ = new EventHandler();
-			_this.componentRendererEvents_.add(_this.component_.once('render', _this.render.bind(_this)));
-			_this.on('rendered', _this.handleRendered_);
+		/**
+   * Creates a validator that checks equality against specific values.
+   * @param {!Array} arrayOfValues Array of values to check equality against.
+   * @return {function()} Validator.
+   */
+		oneOf: function oneOf(arrayOfValues) {
+			return maybe(function (value, name, context) {
+				var result = validators.array(arrayOfValues, name, context);
+				if (isInvalid(result)) {
+					return result;
+				}
 
-			if (_this.component_.constructor.SYNC_UPDATES_MERGED) {
-				_this.componentRendererEvents_.add(_this.component_.on('stateKeyChanged', _this.handleComponentRendererStateKeyChanged_.bind(_this)));
-			} else {
-				_this.componentRendererEvents_.add(_this.component_.on('stateChanged', _this.handleComponentRendererStateChanged_.bind(_this)));
-			}
-			return _this;
+				for (var i = 0; i < arrayOfValues.length; i++) {
+					var oneOfValue = arrayOfValues[i];
+					if (value === oneOfValue) {
+						return true;
+					}
+				}
+
+				return composeError('Expected one of given values.', name, context);
+			});
+		},
+
+		/**
+   * Creates a validator that checks a value against multiple types and only has
+   * to pass one.
+   * @param {!Array} arrayOfTypeValidators Array of validators to check value
+   *     against.
+   * @return {function()} Validator.
+   */
+		oneOfType: function oneOfType(arrayOfTypeValidators) {
+			return maybe(function (value, name, context) {
+				var result = validators.array(arrayOfTypeValidators, name, context);
+				if (isInvalid(result)) {
+					return result;
+				}
+
+				for (var i = 0; i < arrayOfTypeValidators.length; i++) {
+					if (!isInvalid(arrayOfTypeValidators[i](value, name, context))) {
+						return true;
+					}
+				}
+
+				return composeError('Expected one of given types.', name, context);
+			});
+		},
+
+		/**
+   * Creates a validator that checks the shape of an object.
+   * @param {!Object} shape An object containing type validators for each key.
+   * @return {function()} Validator.
+   */
+		shapeOf: function shapeOf(shape) {
+			return maybe(function (value, name, context) {
+				var result = validators.object(shape, name, context);
+				if (isInvalid(result)) {
+					return result;
+				}
+
+				for (var key in shape) {
+					var required = false;
+					var validator = shape[key];
+					if (validator.config) {
+						required = validator.config.required;
+						validator = validator.config.validator;
+					}
+					if (required && !isDefAndNotNull(value[key]) || isInvalid(validator(value[key]))) {
+						return composeError('Expected object with a specific shape', name, context);
+					}
+				}
+
+				return true;
+			});
 		}
+	};
+
+	/**
+  * Composes a warning a warning message.
+  * @param {string} error Error message to display to console.
+  * @param {?string} name Name of state property that is giving the error.
+  * @param {Object} context
+  * @return {!Error} Instance of Error class.
+  */
+	function composeError(error, name, context) {
+		var compName = context ? getFunctionName(context.constructor) : null;
+		var renderer = context && context.getRenderer && context.getRenderer();
+		var parent = renderer && renderer.getParent ? context.getRenderer().getParent() : null;
+		var parentName = parent ? getFunctionName(parent.constructor) : null;
+		var location = parentName ? 'Check render method of \'' + parentName + '\'.' : '';
+		return new Error('Warning: Invalid state passed to \'' + name + '\'. ' + (error + ' Passed to \'' + compName + '\'. ' + location));
+	}
+
+	/**
+  * Returns the type of the given value.
+  * @param {*} value Any value.
+  * @return {string} Type of value.
+  */
+	function getType(value) {
+		var type = typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value);
+		if (Array.isArray(value)) {
+			return 'array';
+		}
+		return type;
+	}
+
+	/**
+  * Checks if the given validator result says that the value is invalid.
+  * @param {boolean|!Error} result
+  * @return {boolean}
+  */
+	function isInvalid(result) {
+		return result instanceof Error;
+	}
+
+	/**
+  * Creates a validator that checks a value against a single type, null, or
+  * undefined.
+  * @param {function()} typeValidator Validator to check value against.
+  * @return {function()} Validator.
+  */
+	function maybe(typeValidator) {
+		return function (value, name, context) {
+			if (!isDef(value) || isNull(value)) {
+				return true;
+			}
+			return typeValidator(value, name, context);
+		};
+	}
+
+	/**
+  * Creates a validator that checks against a specific primitive type. If this
+  * validator is called with no arguments, it will return the actual validator
+  * function instead of running it. That's done to allow all validators to be
+  * used consistently, since some (like `arrayOf`) always require that you call
+  * the function before receiving the actual validator.
+  * @param {string} expectedType Type to check against.
+  * @return {function()} Validator if called with arguments, or wrapper function
+  *     that returns the validator otherwise.
+  */
+	function validateType(expectedType) {
+		var validatorFn = maybe(function (value, name, context) {
+			var type = getType(value);
+			if (type !== expectedType) {
+				return composeError('Expected type \'' + expectedType + '\', but received type \'' + type + '\'.', name, context);
+			}
+			return true;
+		});
+		return function () {
+			if (arguments.length === 0) {
+				return validatorFn;
+			} else {
+				return validatorFn.apply(undefined, arguments);
+			}
+		};
+	}
+
+	this['metal']['validators'] = validators;
+}).call(this);
+'use strict';
+
+(function () {
+	var object = this['metalNamed']['metal']['object'];
+	var validators = this['metal']['validators'];
+
+	/**
+  * Sugar api that can be used as an alternative for manually building `State`
+  * configuration in the expected format. For example, instead of having
+  * something like this:
+  *
+  * ```js
+  * MyClass.STATE = {
+  *   foo: {
+  *     required: true,
+  *     validator: validators.number,
+  *     value: 13
+  *   }
+  * };
+  * ```
+  *
+  * You could instead do:
+  *
+  * ```js
+  * MyClass.STATE = {
+  *   foo: Config.required().number().value(13)
+  * };
+  * ```
+  */
+
+	var Config = {
+		/**
+   * Adds the `required` flag to the `State` configuration.
+   * @param {boolean} required Flag to set "required" to. True by default.
+   * @return {!Object} `State` configuration object.
+   */
+		required: function required() {
+			var _required = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+			return mergeConfig(this, { required: _required });
+		},
+
 
 		/**
-   * @inheritDoc
+   * Adds a setter to the `State` configuration.
+   * @param {!function()} setter
+   * @return {!Object} `State` configuration object.
    */
+		setter: function setter(_setter) {
+			return mergeConfig(this, { setter: _setter });
+		},
 
 
-		babelHelpers.createClass(ComponentRenderer, [{
-			key: 'disposeInternal',
-			value: function disposeInternal() {
-				this.componentRendererEvents_.removeAllListeners();
-				this.componentRendererEvents_ = null;
-			}
+		/**
+   * Adds a validator to the `State` configuration.
+   * @param {!function()} validator
+   * @return {!Object} `State` configuration object.
+   */
+		validator: function validator(_validator) {
+			return mergeConfig(this, { validator: _validator });
+		},
 
-			/**
-    * Handles a `stateChanged` event from this renderer's component. Calls the
-    * `update` function if the component has already been rendered for the first
-    * time.
-    * @param {!Object<string, Object>} changes Object containing the names
-    *     of all changed state keys, each mapped to an object with its new
-    *     (newVal) and previous (prevVal) values.
-    * @protected
-    */
 
-		}, {
-			key: 'handleComponentRendererStateChanged_',
-			value: function handleComponentRendererStateChanged_(changes) {
-				if (this.shouldRerender_(changes)) {
-					this.update(changes);
-				}
-			}
+		/**
+   * Adds a default value to the `State` configuration.
+   * @param {*} value
+   * @return {!Object} `State` configuration object.
+   */
+		value: function value(_value) {
+			return mergeConfig(this, { value: _value });
+		}
+	};
 
-			/**
-    * Handles a `stateKeyChanged` event from this renderer's component. This is
-    * similar to `handleComponentRendererStateChanged_`, but only called for
-    * components that have requested updates to happen synchronously.
-    * @param {!{key: string, newVal: *, prevVal: *}} data
-    * @protected
-    */
+	/**
+  * Merges the given config object into the one that has been built so far.
+  * @param {!Object} context The object calling this function.
+  * @param {!Object} config The object to merge to the built config.
+  * @return {!Object} The final object containing the built config.
+  */
+	function mergeConfig(context, config) {
+		var obj = context;
+		if (obj === Config) {
+			obj = Object.create(Config);
+			obj.config = {};
+		}
+		object.mixin(obj.config, config);
+		return obj;
+	}
 
-		}, {
-			key: 'handleComponentRendererStateKeyChanged_',
-			value: function handleComponentRendererStateKeyChanged_(data) {
-				var changes = {
-					changes: babelHelpers.defineProperty({}, data.key, data)
-				};
-				if (this.shouldRerender_(changes)) {
-					this.update(changes);
-				}
-			}
+	// Add all validators to `Config`.
+	var fnNames = Object.keys(validators);
+	fnNames.forEach(function (name) {
+		return Config[name] = function () {
+			return this.validator(validators[name]);
+		};
+	});
 
-			/**
-    * Handles the "rendered" event.
-    * @protected
-    */
-
-		}, {
-			key: 'handleRendered_',
-			value: function handleRendered_() {
-				this.isRendered_ = true;
-			}
-
-			/**
-    * Checks if any other state property besides "element" has changed.
-    * @param {!Object} changes
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'hasChangedBesidesElement_',
-			value: function hasChangedBesidesElement_(changes) {
-				var count = Object.keys(changes).length;
-				if (changes.hasOwnProperty('element')) {
-					count--;
-				}
-				return count > 0;
-			}
-
-			/**
-    * Renders the component's whole content (including its main element).
-    */
-
-		}, {
-			key: 'render',
-			value: function render() {
-				if (!this.component_.element) {
-					this.component_.element = document.createElement('div');
-				}
-				this.emit('rendered', !this.isRendered_);
-			}
-
-			/**
-    * Checks if the given changes object should cause a rerender.
-    * @param {!Object} changes
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'shouldRerender_',
-			value: function shouldRerender_(changes) {
-				return this.isRendered_ && !this.skipUpdates_ && this.hasChangedBesidesElement_(changes.changes);
-			}
-
-			/**
-    * Skips updates until `stopSkipUpdates` is called.
-    */
-
-		}, {
-			key: 'startSkipUpdates',
-			value: function startSkipUpdates() {
-				this.skipUpdates_ = true;
-			}
-
-			/**
-    * Stops skipping updates.
-    */
-
-		}, {
-			key: 'stopSkipUpdates',
-			value: function stopSkipUpdates() {
-				this.skipUpdates_ = false;
-			}
-
-			/**
-    * Updates the component's element html. This is automatically called when
-    * the value of at least one of the component's state keys has changed.
-    * @param {Object.<string, Object>} changes Object containing the names
-    *     of all changed state keys, each mapped to an object with its new
-    *     (newVal) and previous (prevVal) values.
-    */
-
-		}, {
-			key: 'update',
-			value: function update() {}
-		}]);
-		return ComponentRenderer;
-	}(EventEmitter);
-
-	this['metal']['ComponentRenderer'] = ComponentRenderer;
+	this['metal']['Config'] = Config;
 }).call(this);
 'use strict';
 
 (function () {
 	var array = this['metalNamed']['metal']['array'];
 	var async = this['metalNamed']['metal']['async'];
-	var core = this['metalNamed']['metal']['core'];
+	var isDefAndNotNull = this['metalNamed']['metal']['isDefAndNotNull'];
+	var isFunction = this['metalNamed']['metal']['isFunction'];
+	var isObject = this['metalNamed']['metal']['isObject'];
+	var isString = this['metalNamed']['metal']['isString'];
+	var mergeSuperClassesProperty = this['metalNamed']['metal']['mergeSuperClassesProperty'];
 	var object = this['metalNamed']['metal']['object'];
 	var EventEmitter = this['metalNamed']['events']['EventEmitter'];
 
@@ -3573,15 +3760,56 @@ babelHelpers;
   * changes, as well as configured with validators, setters and other options.
   * See the `addToState` method for a complete list of available configuration
   * options for each state key.
-  * @constructor
   * @extends {EventEmitter}
   */
 
 	var State = function (_EventEmitter) {
 		babelHelpers.inherits(State, _EventEmitter);
 
-		function State(opt_config) {
+		/**
+   * Constructor function for `State`.
+   * @param {Object=} opt_config Optional config object with initial values to
+   *     set state properties to.
+   * @param {Object=} opt_obj Optional object that should hold the state
+   *     properties. If none is given, they will be added directly to `this`
+   *     instead.
+   * @param {Object=} opt_context Optional context to call functions (like
+   *     validators and setters) on. Defaults to `this`.
+   * @param {Object=} opt_commonOpts Optional common option values to be used
+   *     by all this instance's state properties.
+   */
+		function State(opt_config, opt_obj, opt_context, opt_commonOpts) {
 			babelHelpers.classCallCheck(this, State);
+
+			/**
+    * Common option values to be used by all this instance's state properties.
+    * @type {Object}
+    * @protected
+    */
+			var _this = babelHelpers.possibleConstructorReturn(this, (State.__proto__ || Object.getPrototypeOf(State)).call(this));
+
+			_this.commonOpts_ = opt_commonOpts;
+
+			/**
+    * Context to call functions (like validators and setters) on.
+    * @type {!Object}
+    * @protected
+    */
+			_this.context_ = opt_context || _this;
+
+			/**
+    * Map of keys that can not be used as state keys.
+    * @type {!Object<string, boolean>}
+    * @protected
+    */
+			_this.keysBlacklist_ = {};
+
+			/**
+    * Object that should hold the state properties.
+    * @type {!Object}
+    * @protected
+    */
+			_this.obj_ = opt_obj || _this;
 
 			/**
     * Object with information about the batch event that is currently
@@ -3589,8 +3817,6 @@ babelHelpers;
     * @type {Object}
     * @protected
     */
-			var _this = babelHelpers.possibleConstructorReturn(this, (State.__proto__ || Object.getPrototypeOf(State)).call(this));
-
 			_this.scheduledBatchData_ = null;
 
 			/**
@@ -3618,13 +3844,18 @@ babelHelpers;
 		babelHelpers.createClass(State, [{
 			key: 'addKeyToState',
 			value: function addKeyToState(name, config, initialValue) {
-				this.buildKeyInfo_(name, config, initialValue);
-				Object.defineProperty(this, name, this.buildKeyPropertyDef_(name));
+				this.buildKeyInfo_(name, config, initialValue, arguments.length > 2);
+				Object.defineProperty(this.obj_, name, this.buildKeyPropertyDef_(name));
+				this.validateInitialValue_(name);
+				this.assertGivenIfRequired_(name);
 			}
 
 			/**
     * Adds the given key(s) to the state, together with its(their) configs.
     * Config objects support the given settings:
+    *     required - When set to `true`, causes errors to be printed (via
+    *     `console.error`) if no value is given for the property.
+    *
     *     setter - Function for normalizing state key values. It receives the new
     *     value that was set, and returns the value that should be stored.
     *
@@ -3660,8 +3891,8 @@ babelHelpers;
 		}, {
 			key: 'addToState',
 			value: function addToState(configsOrName, opt_initialValuesOrConfig, opt_contextOrInitialValue) {
-				if (core.isString(configsOrName)) {
-					return this.addKeyToState(configsOrName, opt_initialValuesOrConfig, opt_contextOrInitialValue);
+				if (isString(configsOrName)) {
+					return this.addKeyToState.apply(this, arguments);
 				}
 
 				var initialValues = opt_initialValuesOrConfig || {};
@@ -3670,12 +3901,19 @@ babelHelpers;
 				var props = {};
 				for (var i = 0; i < names.length; i++) {
 					var name = names[i];
-					this.buildKeyInfo_(name, configsOrName[name], initialValues[name]);
-					props[name] = this.buildKeyPropertyDef_(name);
+					this.buildKeyInfo_(name, configsOrName[name], initialValues[name], initialValues.hasOwnProperty(name));
+					props[name] = this.buildKeyPropertyDef_(name, opt_contextOrInitialValue);
+					this.assertGivenIfRequired_(name);
 				}
 
 				if (opt_contextOrInitialValue !== false) {
-					Object.defineProperties(opt_contextOrInitialValue || this, props);
+					Object.defineProperties(opt_contextOrInitialValue || this.obj_, props);
+				}
+
+				// Validate initial values after all properties have been defined, otherwise
+				// it won't be possible to access those properties within validators.
+				for (var _i = 0; _i < names.length; _i++) {
+					this.validateInitialValue_(names[_i]);
 				}
 			}
 
@@ -3690,11 +3928,30 @@ babelHelpers;
 			key: 'addToStateFromStaticHint_',
 			value: function addToStateFromStaticHint_(opt_config) {
 				var ctor = this.constructor;
-				var defineContext = false;
-				if (State.mergeStateStatic(ctor)) {
-					defineContext = ctor.prototype;
+				var defineContext;
+				var merged = State.mergeStateStatic(ctor);
+				if (this.obj_ === this) {
+					defineContext = merged ? ctor.prototype : false;
 				}
 				this.addToState(ctor.STATE_MERGED, opt_config, defineContext);
+			}
+
+			/**
+    * Logs an error if the given property is required but wasn't given.
+    * @param {string} name
+    * @protected
+    */
+
+		}, {
+			key: 'assertGivenIfRequired_',
+			value: function assertGivenIfRequired_(name) {
+				var info = this.stateInfo_[name];
+				if (info.config.required) {
+					var value = info.state === State.KeyStates.INITIALIZED ? this.get(name) : info.initialValue;
+					if (!isDefAndNotNull(value)) {
+						console.error('The property called "' + name + '" is required but didn\'t ' + 'receive a value.');
+					}
+				}
 			}
 
 			/**
@@ -3708,7 +3965,7 @@ babelHelpers;
 		}, {
 			key: 'assertValidStateKeyName_',
 			value: function assertValidStateKeyName_(name) {
-				if (this.constructor.INVALID_KEYS_MERGED[name]) {
+				if (this.constructor.INVALID_KEYS_MERGED[name] || this.keysBlacklist_[name]) {
 					throw new Error('It\'s not allowed to create a state key with the name "' + name + '".');
 				}
 			}
@@ -3718,39 +3975,48 @@ babelHelpers;
     * @param {string} name The name of the key.
     * @param {Object} config The config object for the key.
     * @param {*} initialValue The initial value of the key.
+    * @param {boolean} hasInitialValue Flag indicating if an initial value was
+    *     given or not (important since `initialValue` can also be `undefined`).
     * @protected
     */
 
 		}, {
 			key: 'buildKeyInfo_',
-			value: function buildKeyInfo_(name, config, initialValue) {
+			value: function buildKeyInfo_(name, config, initialValue, hasInitialValue) {
 				this.assertValidStateKeyName_(name);
-
+				config = config && config.config ? config.config : config || {};
+				if (this.commonOpts_) {
+					config = object.mixin({}, config, this.commonOpts_);
+				}
 				this.stateInfo_[name] = {
-					config: config || {},
-					initialValue: initialValue,
+					config: config,
 					state: State.KeyStates.UNINITIALIZED
 				};
+				if (hasInitialValue) {
+					this.stateInfo_[name].initialValue = initialValue;
+				}
 			}
 
 			/**
     * Builds the property definition object for the specified state key.
     * @param {string} name The name of the key.
+    * @param {Object=} opt_context The object where the property will be added.
     * @return {!Object}
     * @protected
     */
 
 		}, {
 			key: 'buildKeyPropertyDef_',
-			value: function buildKeyPropertyDef_(name) {
+			value: function buildKeyPropertyDef_(name, opt_context) {
+				var stateObj = opt_context === this.constructor.prototype ? null : this;
 				return {
 					configurable: true,
 					enumerable: true,
 					get: function get() {
-						return this.getStateKeyValue_(name);
+						return (stateObj || this).getStateKeyValue_(name);
 					},
 					set: function set(val) {
-						this.setStateKeyValue_(name, val);
+						(stateObj || this).setStateKeyValue_(name, val);
 					}
 				};
 			}
@@ -3768,10 +4034,10 @@ babelHelpers;
 		}, {
 			key: 'callFunction_',
 			value: function callFunction_(fn, args) {
-				if (core.isString(fn)) {
-					return this[fn].apply(this, args);
-				} else if (core.isFunction(fn)) {
-					return fn.apply(this, args);
+				if (isString(fn)) {
+					return this.context_[fn].apply(this.context_, args);
+				} else if (isFunction(fn)) {
+					return fn.apply(this.context_, args);
 				}
 			}
 
@@ -3810,7 +4076,7 @@ babelHelpers;
 				var info = this.stateInfo_[name];
 				var config = info.config;
 				if (config.validator) {
-					var validatorReturn = this.callFunction_(config.validator, [value, name, this]);
+					var validatorReturn = this.callFunction_(config.validator, [value, name, this.context_]);
 
 					if (validatorReturn instanceof Error) {
 						console.error('Warning: ' + validatorReturn);
@@ -3872,7 +4138,7 @@ babelHelpers;
 		}, {
 			key: 'get',
 			value: function get(name) {
-				return this[name];
+				return this.obj_[name];
 			}
 
 			/**
@@ -3889,7 +4155,7 @@ babelHelpers;
 				var names = opt_names || this.getStateKeys();
 
 				for (var i = 0; i < names.length; i++) {
-					state[names[i]] = this[names[i]];
+					state[names[i]] = this.get(names[i]);
 				}
 
 				return state;
@@ -3910,13 +4176,13 @@ babelHelpers;
 
 			/**
     * Returns an array with all state keys.
-    * @return {Array.<string>}
+    * @return {!Array.<string>}
     */
 
 		}, {
 			key: 'getStateKeys',
 			value: function getStateKeys() {
-				return Object.keys(this.stateInfo_);
+				return this.stateInfo_ ? Object.keys(this.stateInfo_) : [];
 			}
 
 			/**
@@ -3930,8 +4196,10 @@ babelHelpers;
 		}, {
 			key: 'getStateKeyValue_',
 			value: function getStateKeyValue_(name) {
-				this.initStateKey_(name);
-				return this.stateInfo_[name].value;
+				if (!this.warnIfDisposed_(name)) {
+					this.initStateKey_(name);
+					return this.stateInfo_[name].value;
+				}
 			}
 
 			/**
@@ -3945,7 +4213,20 @@ babelHelpers;
 			key: 'hasBeenSet',
 			value: function hasBeenSet(name) {
 				var info = this.stateInfo_[name];
-				return info.state === State.KeyStates.INITIALIZED || info.initialValue;
+				return info.state === State.KeyStates.INITIALIZED || this.hasInitialValue_(name);
+			}
+
+			/**
+    * Checks if an initial value was given to the specified state property.
+    * @param {string} name The name of the key.
+    * @return {boolean}
+    * @protected
+    */
+
+		}, {
+			key: 'hasInitialValue_',
+			value: function hasInitialValue_(name) {
+				return this.stateInfo_[name].hasOwnProperty('initialValue');
 			}
 
 			/**
@@ -3957,7 +4238,9 @@ babelHelpers;
 		}, {
 			key: 'hasStateKey',
 			value: function hasStateKey(key) {
-				return !!this.stateInfo_[key];
+				if (!this.warnIfDisposed_(key)) {
+					return !!this.stateInfo_[key];
+				}
 			}
 
 			/**
@@ -3974,7 +4257,7 @@ babelHelpers;
 				if (this.shouldInformChange_(name, prevVal)) {
 					var data = {
 						key: name,
-						newVal: this[name],
+						newVal: this.get(name),
 						prevVal: prevVal
 					};
 					this.emit(name + 'Changed', data);
@@ -4000,8 +4283,7 @@ babelHelpers;
 				info.state = State.KeyStates.INITIALIZING;
 				this.setInitialValue_(name);
 				if (!info.written) {
-					info.state = State.KeyStates.INITIALIZING_DEFAULT;
-					this.setDefaultValue_(name);
+					this.setDefaultValue(name);
 				}
 				info.state = State.KeyStates.INITIALIZED;
 			}
@@ -4011,7 +4293,6 @@ babelHelpers;
     * @param {!Array} values The values to be merged.
     * @return {!Object} The merged value.
     * @static
-    * @protected
     */
 
 		}, {
@@ -4024,7 +4305,7 @@ babelHelpers;
     * @protected
     */
 			value: function mergeInvalidKeys_() {
-				core.mergeSuperClassesProperty(this.constructor, 'INVALID_KEYS', function (values) {
+				mergeSuperClassesProperty(this.constructor, 'INVALID_KEYS', function (values) {
 					return array.flatten(values).reduce(function (merged, val) {
 						if (val) {
 							merged[val] = true;
@@ -4043,7 +4324,7 @@ babelHelpers;
 			key: 'removeStateKey',
 			value: function removeStateKey(name) {
 				this.stateInfo_[name] = null;
-				delete this[name];
+				delete this.obj_[name];
 			}
 
 			/**
@@ -4085,7 +4366,7 @@ babelHelpers;
 			key: 'set',
 			value: function set(name, value) {
 				if (this.hasStateKey(name)) {
-					this[name] = value;
+					this.obj_[name] = value;
 				}
 			}
 
@@ -4093,18 +4374,17 @@ babelHelpers;
     * Sets the default value of the requested state key.
     * @param {string} name The name of the key.
     * @return {*}
-    * @protected
     */
 
 		}, {
-			key: 'setDefaultValue_',
-			value: function setDefaultValue_(name) {
+			key: 'setDefaultValue',
+			value: function setDefaultValue(name) {
 				var config = this.stateInfo_[name].config;
 
 				if (config.value !== undefined) {
-					this[name] = config.value;
+					this.set(name, config.value);
 				} else {
-					this[name] = this.callFunction_(config.valueFn);
+					this.set(name, this.callFunction_(config.valueFn));
 				}
 			}
 
@@ -4118,11 +4398,22 @@ babelHelpers;
 		}, {
 			key: 'setInitialValue_',
 			value: function setInitialValue_(name) {
-				var info = this.stateInfo_[name];
-				if (info.initialValue !== undefined) {
-					this[name] = info.initialValue;
+				if (this.hasInitialValue_(name)) {
+					var info = this.stateInfo_[name];
+					this.set(name, info.initialValue);
 					info.initialValue = undefined;
 				}
+			}
+
+			/**
+    * Sets a map of keys that are not valid state keys.
+    * @param {!Object<string, boolean>}
+    */
+
+		}, {
+			key: 'setKeysBlacklist_',
+			value: function setKeysBlacklist_(blacklist) {
+				this.keysBlacklist_ = blacklist;
 			}
 
 			/**
@@ -4158,17 +4449,18 @@ babelHelpers;
 		}, {
 			key: 'setStateKeyValue_',
 			value: function setStateKeyValue_(name, value) {
-				if (!this.canSetState(name) || !this.validateKeyValue_(name, value)) {
+				if (this.warnIfDisposed_(name) || !this.canSetState(name) || !this.validateKeyValue_(name, value)) {
 					return;
 				}
 
 				var info = this.stateInfo_[name];
-				if (info.initialValue === undefined && info.state === State.KeyStates.UNINITIALIZED) {
+				if (!this.hasInitialValue_(name) && info.state === State.KeyStates.UNINITIALIZED) {
 					info.state = State.KeyStates.INITIALIZED;
 				}
 
-				var prevVal = this[name];
+				var prevVal = this.get(name);
 				info.value = this.callSetter_(name, value, prevVal);
+				this.assertGivenIfRequired_(name);
 				info.written = true;
 				this.informChange_(name, prevVal);
 			}
@@ -4190,7 +4482,22 @@ babelHelpers;
 			key: 'shouldInformChange_',
 			value: function shouldInformChange_(name, prevVal) {
 				var info = this.stateInfo_[name];
-				return info.state === State.KeyStates.INITIALIZED && (core.isObject(prevVal) || prevVal !== this[name]);
+				return info.state === State.KeyStates.INITIALIZED && (isObject(prevVal) || prevVal !== this.get(name));
+			}
+
+			/**
+    * Validates the initial value for the state property with the given name.
+    * @param {string} name
+    * @protected
+    */
+
+		}, {
+			key: 'validateInitialValue_',
+			value: function validateInitialValue_(name) {
+				var info = this.stateInfo_[name];
+				if (this.hasInitialValue_(name) && !this.callValidator_(name, info.initialValue)) {
+					delete info.initialValue;
+				}
 			}
 
 			/**
@@ -4207,11 +4514,28 @@ babelHelpers;
 			value: function validateKeyValue_(name, value) {
 				var info = this.stateInfo_[name];
 
-				return info.state === State.KeyStates.INITIALIZING_DEFAULT || this.callValidator_(name, value);
+				return info.state === State.KeyStates.INITIALIZING || this.callValidator_(name, value);
+			}
+
+			/**
+    * Warns if this instance has already been disposed.
+    * @param {string} name Name of the property to be accessed if not disposed.
+    * @return {boolean} True if disposed, or false otherwise.
+    * @protected
+    */
+
+		}, {
+			key: 'warnIfDisposed_',
+			value: function warnIfDisposed_(name) {
+				var disposed = this.isDisposed();
+				if (disposed) {
+					console.warn('Error. Trying to access property "' + name + '" on disposed instance');
+				}
+				return disposed;
 			}
 		}], [{
-			key: 'mergeState_',
-			value: function mergeState_(values) {
+			key: 'mergeState',
+			value: function mergeState(values) {
 				return object.mixin.apply(null, [{}].concat(values.reverse()));
 			}
 
@@ -4225,7 +4549,7 @@ babelHelpers;
 		}, {
 			key: 'mergeStateStatic',
 			value: function mergeStateStatic(ctor) {
-				return core.mergeSuperClassesProperty(ctor, 'STATE', State.mergeState_);
+				return mergeSuperClassesProperty(ctor, 'STATE', State.mergeState);
 			}
 		}]);
 		return State;
@@ -4242,14 +4566,13 @@ babelHelpers;
 	State.INVALID_KEYS = ['state', 'stateKey'];
 
 	/**
-  * Constants that represent the states that an a state key can be in.
+  * Constants that represent the states that a state key can be in.
   * @type {!Object}
   */
 	State.KeyStates = {
 		UNINITIALIZED: 0,
 		INITIALIZING: 1,
-		INITIALIZING_DEFAULT: 2,
-		INITIALIZED: 3
+		INITIALIZED: 2
 	};
 
 	this['metal']['State'] = State;
@@ -4257,14 +4580,448 @@ babelHelpers;
 'use strict';
 
 (function () {
+  var validators = this['metal']['validators'];
+  var Config = this['metal']['Config'];
+  var State = this['metal']['State'];
+  this['metal']['state'] = State;
+  this['metalNamed']['state'] = this['metalNamed']['state'] || {};
+  this['metalNamed']['state']['validators'] = validators;
+  this['metalNamed']['state']['Config'] = Config;
+  this['metalNamed']['state']['State'] = State;
+}).call(this);
+'use strict';
+
+(function () {
 	var array = this['metalNamed']['metal']['array'];
-	var core = this['metalNamed']['metal']['core'];
+	var mergeSuperClassesProperty = this['metalNamed']['metal']['mergeSuperClassesProperty'];
 	var object = this['metalNamed']['metal']['object'];
-	var dom = this['metalNamed']['dom']['dom'];
-	var DomEventEmitterProxy = this['metalNamed']['dom']['DomEventEmitterProxy'];
-	var ComponentRenderer = this['metal']['ComponentRenderer'];
+	var EventEmitter = this['metalNamed']['events']['EventEmitter'];
+	var EventEmitterProxy = this['metalNamed']['events']['EventEmitterProxy'];
+	var State = this['metal']['state'];
+
+	var ComponentDataManager = function (_EventEmitter) {
+		babelHelpers.inherits(ComponentDataManager, _EventEmitter);
+
+		/**
+   * Constructor for `ComponentDataManager`.
+   * @param {!Component} component
+   * @param {!Object} data
+   */
+		function ComponentDataManager(component, data) {
+			babelHelpers.classCallCheck(this, ComponentDataManager);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, (ComponentDataManager.__proto__ || Object.getPrototypeOf(ComponentDataManager)).call(this));
+
+			_this.component_ = component;
+
+			mergeSuperClassesProperty(_this.constructor, 'BLACKLIST', array.firstDefinedValue);
+			State.mergeStateStatic(_this.component_.constructor);
+
+			_this.createState_(data, _this.component_);
+			return _this;
+		}
+
+		/**
+   * Adds a state property to the component.
+   * @param {string} name
+   * @param {!Object} config
+   * @param {*} opt_initialValue
+   */
+
+
+		babelHelpers.createClass(ComponentDataManager, [{
+			key: 'add',
+			value: function add() {
+				var _state_;
+
+				(_state_ = this.state_).addToState.apply(_state_, arguments);
+			}
+
+			/**
+    * Builds the configuration data that will be passed to the `State` instance.
+    * @param {!Object} data
+    * @return {!Object}
+    * @protected
+    */
+
+		}, {
+			key: 'buildStateInstanceData_',
+			value: function buildStateInstanceData_(data) {
+				return object.mixin({}, data, this.component_.constructor.STATE_MERGED);
+			}
+
+			/**
+    * Creates the `State` instance that will handle the main component data.
+    * @param {!Object} data
+    * @param {!Object} holder The object that should hold the data properties.
+    * @protected
+    */
+
+		}, {
+			key: 'createState_',
+			value: function createState_(data, holder) {
+				var state = new State({}, holder, this.component_);
+				state.setKeysBlacklist_(this.constructor.BLACKLIST_MERGED);
+				state.addToState(this.buildStateInstanceData_(data), this.component_.getInitialConfig());
+
+				var listener = this.emit_.bind(this);
+				state.on('stateChanged', listener);
+				state.on('stateKeyChanged', listener);
+				this.state_ = state;
+
+				this.proxy_ = new EventEmitterProxy(state, this.component_);
+			}
+
+			/**
+    * @inheritDoc
+    */
+
+		}, {
+			key: 'disposeInternal',
+			value: function disposeInternal() {
+				babelHelpers.get(ComponentDataManager.prototype.__proto__ || Object.getPrototypeOf(ComponentDataManager.prototype), 'disposeInternal', this).call(this);
+
+				this.state_.dispose();
+				this.state_ = null;
+
+				this.proxy_.dispose();
+				this.proxy_ = null;
+			}
+
+			/**
+    * Emits the specified event.
+    * @param {!Object} data
+    * @param {!Object} event
+    * @protected
+    */
+
+		}, {
+			key: 'emit_',
+			value: function emit_(data, event) {
+				var orig = event.type;
+				var name = orig === 'stateChanged' ? 'dataChanged' : 'dataPropChanged';
+				this.emit(name, data);
+			}
+
+			/**
+    * Gets the data with the given name.
+    * @param {string} name
+    * @return {*}
+    */
+
+		}, {
+			key: 'get',
+			value: function get(name) {
+				return this.state_.get(name);
+			}
+
+			/**
+    * Gets the keys for state data that can be synced via `sync` functions.
+    * @return {!Array<string>}
+    */
+
+		}, {
+			key: 'getSyncKeys',
+			value: function getSyncKeys() {
+				return this.state_.getStateKeys();
+			}
+
+			/**
+    * Gets the keys for state data.
+    * @return {!Array<string>}
+    */
+
+		}, {
+			key: 'getStateKeys',
+			value: function getStateKeys() {
+				return this.state_.getStateKeys();
+			}
+
+			/**
+    * Gets the whole state data.
+    * @return {!Object}
+    */
+
+		}, {
+			key: 'getState',
+			value: function getState() {
+				return this.state_.getState();
+			}
+
+			/**
+    * Gets the `State` instance being used.
+    * @return {!Object}
+    */
+
+		}, {
+			key: 'getStateInstance',
+			value: function getStateInstance() {
+				return this.state_;
+			}
+
+			/**
+    * Updates all non internal data with the given values (or to the default
+    * value if none is given).
+    * @param {!Object} data
+    */
+
+		}, {
+			key: 'replaceNonInternal',
+			value: function replaceNonInternal(data) {
+				ComponentDataManager.replaceNonInternal(data, this.state_);
+			}
+
+			/**
+    * Updates all non internal data with the given values (or to the default
+    * value if none is given).
+    * @param {!Object} data
+    * @param {!State} state
+    */
+
+		}, {
+			key: 'setState',
+
+
+			/**
+    * Sets the value of all the specified state keys.
+    * @param {!Object.<string,*>} values A map of state keys to the values they
+    *   should be set to.
+    * @param {function()=} opt_callback An optional function that will be run
+    *   after the next batched update is triggered.
+    */
+			value: function setState(state, opt_callback) {
+				this.state_.setState(state, opt_callback);
+			}
+		}], [{
+			key: 'replaceNonInternal',
+			value: function replaceNonInternal(data, state) {
+				var keys = state.getStateKeys();
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i];
+					if (!state.getStateKeyConfig(key).internal) {
+						if (data.hasOwnProperty(key)) {
+							state.set(key, data[key]);
+						} else {
+							state.setDefaultValue(key);
+						}
+					}
+				}
+			}
+		}]);
+		return ComponentDataManager;
+	}(EventEmitter);
+
+	ComponentDataManager.BLACKLIST = {
+		components: true,
+		context: true,
+		element: true,
+		refs: true,
+		wasRendered: true
+	};
+
+	this['metal']['ComponentDataManager'] = ComponentDataManager;
+}).call(this);
+'use strict';
+
+(function () {
+	var EventEmitter = this['metalNamed']['events']['EventEmitter'];
 	var EventHandler = this['metalNamed']['events']['EventHandler'];
-	var State = this['metal']['State'];
+
+	/**
+  * Base class that component renderers should extend from. It defines the
+  * required methods all renderers should have.
+  */
+
+	var ComponentRenderer = function (_EventEmitter) {
+		babelHelpers.inherits(ComponentRenderer, _EventEmitter);
+
+		/**
+   * Constructor function for `ComponentRenderer`.
+   * @param {!Component} component The component that this renderer is
+   *     responsible for.
+   */
+		function ComponentRenderer(component) {
+			babelHelpers.classCallCheck(this, ComponentRenderer);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, (ComponentRenderer.__proto__ || Object.getPrototypeOf(ComponentRenderer)).call(this));
+
+			_this.component_ = component;
+
+			_this.componentRendererEvents_ = new EventHandler();
+			_this.componentRendererEvents_.add(_this.component_.once('render', _this.render.bind(_this)));
+			_this.on('rendered', _this.handleRendered_);
+			component.on('dataManagerCreated', _this.handleDataManagerCreated_.bind(_this));
+			return _this;
+		}
+
+		/**
+   * @inheritDoc
+   */
+
+
+		babelHelpers.createClass(ComponentRenderer, [{
+			key: 'disposeInternal',
+			value: function disposeInternal() {
+				this.componentRendererEvents_.removeAllListeners();
+				this.componentRendererEvents_ = null;
+			}
+
+			/**
+    * Returns this renderer's component.
+    * @return {!Component}
+    */
+
+		}, {
+			key: 'getComponent',
+			value: function getComponent() {
+				return this.component_;
+			}
+
+			/**
+    * Handles a `dataManagerCreated` event from the component. Listens to events
+    * on the manager that has been created.
+    * @protected
+    */
+
+		}, {
+			key: 'handleDataManagerCreated_',
+			value: function handleDataManagerCreated_() {
+				var manager = this.component_.getDataManager();
+				if (this.component_.constructor.SYNC_UPDATES_MERGED) {
+					this.componentRendererEvents_.add(manager.on('dataPropChanged', this.handleManagerDataPropChanged_.bind(this)));
+				} else {
+					this.componentRendererEvents_.add(manager.on('dataChanged', this.handleManagerDataChanged_.bind(this)));
+				}
+			}
+
+			/**
+    * Handles a `dataChanged` event from the component's data manager. Calls the
+    * `update` function if the component has already been rendered for the first
+    * time.
+    * @param {!Object<string, Object>} changes Object containing the names
+    *     of all changed state keys, each mapped to an object with its new
+    *     (newVal) and previous (prevVal) values.
+    * @protected
+    */
+
+		}, {
+			key: 'handleManagerDataChanged_',
+			value: function handleManagerDataChanged_(changes) {
+				if (this.shouldRerender_()) {
+					this.update(changes);
+				}
+			}
+
+			/**
+    * Handles a `dataPropChanged` event from the component's data manager. This
+    * is similar to `handleManagerDataChanged_`, but only called for
+    * components that have requested updates to happen synchronously.
+    * @param {!{key: string, newVal: *, prevVal: *}} data
+    * @protected
+    */
+
+		}, {
+			key: 'handleManagerDataPropChanged_',
+			value: function handleManagerDataPropChanged_(data) {
+				if (this.shouldRerender_()) {
+					this.update({
+						changes: babelHelpers.defineProperty({}, data.key, data)
+					});
+				}
+			}
+
+			/**
+    * Handles the "rendered" event.
+    * @protected
+    */
+
+		}, {
+			key: 'handleRendered_',
+			value: function handleRendered_() {
+				this.isRendered_ = true;
+			}
+
+			/**
+    * Renders the component's whole content (including its main element).
+    */
+
+		}, {
+			key: 'render',
+			value: function render() {
+				if (!this.component_.element) {
+					this.component_.element = document.createElement('div');
+				}
+				this.emit('rendered', !this.isRendered_);
+			}
+
+			/**
+    * Checks if changes should cause a rerender right now.
+    * @return {boolean}
+    * @protected
+    */
+
+		}, {
+			key: 'shouldRerender_',
+			value: function shouldRerender_() {
+				return this.isRendered_ && !this.skipUpdates_;
+			}
+
+			/**
+    * Skips updates until `stopSkipUpdates` is called.
+    */
+
+		}, {
+			key: 'startSkipUpdates',
+			value: function startSkipUpdates() {
+				this.skipUpdates_ = true;
+			}
+
+			/**
+    * Stops skipping updates.
+    */
+
+		}, {
+			key: 'stopSkipUpdates',
+			value: function stopSkipUpdates() {
+				this.skipUpdates_ = false;
+			}
+
+			/**
+    * Updates the component's element html. This is automatically called when
+    * the value of at least one of the component's state keys has changed.
+    * @param {Object.<string, Object>} changes Object containing the names
+    *     of all changed state keys, each mapped to an object with its new
+    *     (newVal) and previous (prevVal) values.
+    */
+
+		}, {
+			key: 'update',
+			value: function update() {}
+		}]);
+		return ComponentRenderer;
+	}(EventEmitter);
+
+	this['metal']['ComponentRenderer'] = ComponentRenderer;
+}).call(this);
+'use strict';
+
+(function () {
+	var array = this['metalNamed']['metal']['array'];
+	var getFunctionName = this['metalNamed']['metal']['getFunctionName'];
+	var isBoolean = this['metalNamed']['metal']['isBoolean'];
+	var isDefAndNotNull = this['metalNamed']['metal']['isDefAndNotNull'];
+	var isElement = this['metalNamed']['metal']['isElement'];
+	var isFunction = this['metalNamed']['metal']['isFunction'];
+	var isObject = this['metalNamed']['metal']['isObject'];
+	var isString = this['metalNamed']['metal']['isString'];
+	var mergeSuperClassesProperty = this['metalNamed']['metal']['mergeSuperClassesProperty'];
+	var object = this['metalNamed']['metal']['object'];
+	var DomEventEmitterProxy = this['metalNamed']['dom']['DomEventEmitterProxy'];
+	var toElement = this['metalNamed']['dom']['toElement'];
+	var ComponentDataManager = this['metal']['ComponentDataManager'];
+	var ComponentRenderer = this['metal']['ComponentRenderer'];
+	var EventEmitter = this['metalNamed']['events']['EventEmitter'];
+	var EventHandler = this['metalNamed']['events']['EventHandler'];
 
 	/**
   * Component collects common behaviors to be followed by UI components, such
@@ -4311,8 +5068,8 @@ babelHelpers;
   * @extends {State}
   */
 
-	var Component = function (_State) {
-		babelHelpers.inherits(Component, _State);
+	var Component = function (_EventEmitter) {
+		babelHelpers.inherits(Component, _EventEmitter);
 
 		/**
    * Constructor function for `Component`.
@@ -4333,7 +5090,7 @@ babelHelpers;
     * @type {!Object<string, bool>}
     * @protected
     */
-			var _this = babelHelpers.possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opt_config));
+			var _this = babelHelpers.possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this));
 
 			_this.attachedListeners_ = {};
 
@@ -4385,18 +5142,24 @@ babelHelpers;
     */
 			_this.DEFAULT_ELEMENT_PARENT = document.body;
 
-			core.mergeSuperClassesProperty(_this.constructor, 'ELEMENT_CLASSES', _this.mergeElementClasses_);
-			core.mergeSuperClassesProperty(_this.constructor, 'SYNC_UPDATES', array.firstDefinedValue);
+			mergeSuperClassesProperty(_this.constructor, 'ELEMENT_CLASSES', _this.mergeElementClasses_);
+			mergeSuperClassesProperty(_this.constructor, 'SYNC_UPDATES', array.firstDefinedValue);
+
+			_this.element = _this.initialConfig_.element;
 
 			_this.renderer_ = _this.createRenderer();
-			_this.renderer_.on('rendered', _this.rendered.bind(_this));
+			_this.renderer_.on('rendered', _this.handleRendererRendered_.bind(_this));
+
+			_this.dataManager_ = _this.createDataManager();
+			_this.emit('dataManagerCreated');
 
 			_this.on('stateChanged', _this.handleStateChanged_);
 			_this.newListenerHandle_ = _this.on('newListener', _this.handleNewListener_);
 			_this.on('eventsChanged', _this.onEventsChanged_);
-			_this.addListenersFromObj_(_this.events);
+			_this.addListenersFromObj_(_this.dataManager_.get('events'));
 
 			_this.created();
+			_this.componentCreated_ = true;
 			if (opt_parentElement !== false) {
 				_this.render_(opt_parentElement);
 			}
@@ -4405,28 +5168,20 @@ babelHelpers;
 		}
 
 		/**
-   * Adds the necessary classes to the component's element.
+   * Getter logic for the element property.
+   * @return {Element}
    */
 
 
 		babelHelpers.createClass(Component, [{
-			key: 'addElementClasses',
-			value: function addElementClasses() {
-				var classesToAdd = this.constructor.ELEMENT_CLASSES_MERGED;
-				if (this.elementClasses) {
-					classesToAdd = classesToAdd + ' ' + this.elementClasses;
-				}
-				dom.addClasses(this.element, classesToAdd);
-			}
+			key: 'addListenersFromObj_',
+
 
 			/**
     * Adds the listeners specified in the given object.
     * @param {Object} events
     * @protected
     */
-
-		}, {
-			key: 'addListenersFromObj_',
 			value: function addListenersFromObj_(events) {
 				var eventNames = Object.keys(events || {});
 				for (var i = 0; i < eventNames.length; i++) {
@@ -4506,6 +5261,19 @@ babelHelpers;
 			value: function created() {}
 
 			/**
+    * Creates the data manager for this component. Sub classes can override this
+    * to return a custom manager as needed.
+    * @return {!ComponentDataManager}
+    */
+
+		}, {
+			key: 'createDataManager',
+			value: function createDataManager() {
+				mergeSuperClassesProperty(this.constructor, 'DATA_MANAGER', array.firstDefinedValue);
+				return new this.constructor.DATA_MANAGER_MERGED(this, Component.DATA);
+			}
+
+			/**
     * Creates the renderer for this component. Sub classes can override this to
     * return a custom renderer as needed.
     * @return {!ComponentRenderer}
@@ -4514,7 +5282,7 @@ babelHelpers;
 		}, {
 			key: 'createRenderer',
 			value: function createRenderer() {
-				core.mergeSuperClassesProperty(this.constructor, 'RENDERER', array.firstDefinedValue);
+				mergeSuperClassesProperty(this.constructor, 'RENDERER', array.firstDefinedValue);
 				return new this.constructor.RENDERER_MERGED(this);
 			}
 
@@ -4596,6 +5364,9 @@ babelHelpers;
 				this.disposeSubComponents(Object.keys(this.components));
 				this.components = null;
 
+				this.dataManager_.dispose();
+				this.dataManager_ = null;
+
 				this.renderer_.dispose();
 				this.renderer_ = null;
 
@@ -4633,14 +5404,25 @@ babelHelpers;
 				var info = {
 					fn: value
 				};
-				if (core.isObject(value) && !core.isFunction(value)) {
+				if (isObject(value) && !isFunction(value)) {
 					info.selector = value.selector;
 					info.fn = value.fn;
 				}
-				if (core.isString(info.fn)) {
+				if (isString(info.fn)) {
 					info.fn = this.getListenerFn(info.fn);
 				}
 				return info;
+			}
+
+			/**
+    * Gets the `ComponentDataManager` instance being used.
+    * @return {!ComponentDataManager}
+    */
+
+		}, {
+			key: 'getDataManager',
+			value: function getDataManager() {
+				return this.dataManager_;
 			}
 
 			/**
@@ -4665,11 +5447,33 @@ babelHelpers;
 		}, {
 			key: 'getListenerFn',
 			value: function getListenerFn(fnName) {
-				if (core.isFunction(this[fnName])) {
+				if (isFunction(this[fnName])) {
 					return this[fnName].bind(this);
 				} else {
-					console.error('No function named "' + fnName + '" was found in the ' + 'component "' + core.getFunctionName(this.constructor) + '". Make ' + 'sure that you specify valid function names when adding inline listeners.');
+					console.error('No function named "' + fnName + '" was found in the ' + 'component "' + getFunctionName(this.constructor) + '". Make ' + 'sure that you specify valid function names when adding inline listeners.');
 				}
+			}
+
+			/**
+    * Gets state data for this component.
+    * @return {!Object}
+    */
+
+		}, {
+			key: 'getState',
+			value: function getState() {
+				return this.dataManager_.getState();
+			}
+
+			/**
+    * Gets the keys for the state data.
+    * @return {!Array<string>}
+    */
+
+		}, {
+			key: 'getStateKeys',
+			value: function getStateKeys() {
+				return this.dataManager_.getStateKeys();
 			}
 
 			/**
@@ -4684,10 +5488,11 @@ babelHelpers;
 			key: 'fireStateKeyChange_',
 			value: function fireStateKeyChange_(key, opt_change) {
 				var fn = this['sync' + key.charAt(0).toUpperCase() + key.slice(1)];
-				if (core.isFunction(fn)) {
+				if (isFunction(fn)) {
 					if (!opt_change) {
+						var manager = this.getDataManager();
 						opt_change = {
-							newVal: this[key],
+							newVal: manager.get(key),
 							prevVal: undefined
 						};
 					}
@@ -4704,6 +5509,19 @@ babelHelpers;
 			key: 'getRenderer',
 			value: function getRenderer() {
 				return this.renderer_;
+			}
+
+			/**
+    * Handles a `rendered` event from the current renderer instance.
+    * @param {!Object}
+    * @protected
+    */
+
+		}, {
+			key: 'handleRendererRendered_',
+			value: function handleRendererRendered_(data) {
+				this.rendered(data);
+				this.emit('rendered', data);
 			}
 
 			/**
@@ -4770,18 +5588,10 @@ babelHelpers;
 		}, {
 			key: 'onElementChanged_',
 			value: function onElementChanged_(event) {
-				if (event.prevVal === event.newVal) {
-					// The `elementChanged` event will be fired whenever the element is set,
-					// even if its value hasn't actually changed, since that's how State
-					// handles objects. We need to check manually here.
-					return;
-				}
-
 				this.setUpProxy_();
 				this.elementEventProxy_.setOriginEmitter(event.newVal);
 				if (event.newVal) {
-					this.addElementClasses();
-					this.syncVisible(this.visible);
+					this.syncVisible(this.dataManager_.get('visible'));
 				}
 			}
 
@@ -4870,27 +5680,46 @@ babelHelpers;
 			value: function renderElement_(opt_parentElement, opt_siblingElement) {
 				var element = this.element;
 				if (element && (opt_siblingElement || !element.parentNode)) {
-					var parent = dom.toElement(opt_parentElement) || this.DEFAULT_ELEMENT_PARENT;
-					parent.insertBefore(element, dom.toElement(opt_siblingElement));
+					var parent = toElement(opt_parentElement) || this.DEFAULT_ELEMENT_PARENT;
+					parent.insertBefore(element, toElement(opt_siblingElement));
 				}
 			}
 
 			/**
-    * Setter logic for element state key.
-    * @param {string|Element} newVal
-    * @param {Element} currentVal
-    * @return {Element}
+    * Setter logic for the element property.
+    * @param {?string|Element} val
+    */
+
+		}, {
+			key: 'setState',
+
+
+			/**
+    * Sets the value of all the specified state keys.
+    * @param {!Object.<string,*>} values A map of state keys to the values they
+    *   should be set to.
+    * @param {function()=} opt_callback An optional function that will be run
+    *   after the next batched update is triggered.
+    */
+			value: function setState(state, opt_callback) {
+				this.dataManager_.setState(state, opt_callback);
+			}
+
+			/**
+    * Setter for the `elementClasses` data property. Appends given value with
+    * the one specified in `ELEMENT_CLASSES`.
+    * @param {string} val
+    * @return {string}
     * @protected
     */
 
 		}, {
-			key: 'setterElementFn_',
-			value: function setterElementFn_(newVal, currentVal) {
-				var element = newVal;
-				if (element) {
-					element = dom.toElement(newVal) || currentVal;
+			key: 'setterElementClassesFn_',
+			value: function setterElementClassesFn_(val) {
+				if (this.constructor.ELEMENT_CLASSES_MERGED) {
+					val += ' ' + this.constructor.ELEMENT_CLASSES_MERGED;
 				}
-				return element;
+				return val.trim();
 			}
 
 			/**
@@ -4924,7 +5753,7 @@ babelHelpers;
 		}, {
 			key: 'syncState_',
 			value: function syncState_() {
-				var keys = this.getStateKeys();
+				var keys = this.dataManager_.getSyncKeys();
 				for (var i = 0; i < keys.length; i++) {
 					this.fireStateKeyChange_(keys[i]);
 				}
@@ -4943,21 +5772,6 @@ babelHelpers;
 				for (var key in changes) {
 					this.fireStateKeyChange_(key, changes[key]);
 				}
-			}
-
-			/**
-    * State synchronization logic for the `elementClasses` state key.
-    * @param {string} newVal
-    * @param {string} prevVal
-    */
-
-		}, {
-			key: 'syncElementClasses',
-			value: function syncElementClasses(newVal, prevVal) {
-				if (this.element && prevVal) {
-					dom.removeClasses(this.element, prevVal);
-				}
-				this.addElementClasses();
 			}
 
 			/**
@@ -4985,32 +5799,6 @@ babelHelpers;
 			value: function rendered() {}
 
 			/**
-    * Validator logic for elementClasses state key.
-    * @param {string} val
-    * @return {boolean} True if val is a valid element classes.
-    * @protected
-    */
-
-		}, {
-			key: 'validatorElementClassesFn_',
-			value: function validatorElementClassesFn_(val) {
-				return core.isString(val);
-			}
-
-			/**
-    * Validator logic for element state key.
-    * @param {?string|Element} val
-    * @return {boolean} True if val is a valid element.
-    * @protected
-    */
-
-		}, {
-			key: 'validatorElementFn_',
-			value: function validatorElementFn_(val) {
-				return core.isElement(val) || core.isString(val) || !core.isDefAndNotNull(val);
-			}
-
-			/**
     * Validator logic for the `events` state key.
     * @param {Object} val
     * @return {boolean}
@@ -5020,7 +5808,32 @@ babelHelpers;
 		}, {
 			key: 'validatorEventsFn_',
 			value: function validatorEventsFn_(val) {
-				return !core.isDefAndNotNull(val) || core.isObject(val);
+				return !isDefAndNotNull(val) || isObject(val);
+			}
+		}, {
+			key: 'element',
+			get: function get() {
+				return this.elementVal_;
+			},
+			set: function set(val) {
+				if (!isElement(val) && !isString(val) && isDefAndNotNull(val)) {
+					return;
+				}
+
+				if (val) {
+					val = toElement(val) || this.elementVal_;
+				}
+
+				if (this.elementVal_ !== val) {
+					var prev = this.elementVal_;
+					this.elementVal_ = val;
+					if (this.componentCreated_) {
+						this.emit('elementChanged', {
+							prevVal: prev,
+							newVal: val
+						});
+					}
+				}
 			}
 		}], [{
 			key: 'isComponentCtor',
@@ -5032,7 +5845,7 @@ babelHelpers;
 			value: function render(Ctor, opt_configOrElement, opt_element) {
 				var config = opt_configOrElement;
 				var element = opt_element;
-				if (core.isElement(opt_configOrElement)) {
+				if (isElement(opt_configOrElement)) {
 					config = null;
 					element = opt_configOrElement;
 				}
@@ -5042,32 +5855,24 @@ babelHelpers;
 			}
 		}]);
 		return Component;
-	}(State);
+	}(EventEmitter);
 
 	/**
-  * Component state definition.
+  * Component data definition.
   * @type {Object}
   * @static
   */
 
 
-	Component.STATE = {
-		/**
-   * Component element bounding box.
-   * @type {Element}
-   * @writeOnce
-   */
-		element: {
-			setter: 'setterElementFn_',
-			validator: 'validatorElementFn_'
-		},
-
+	Component.DATA = {
 		/**
    * CSS classes to be applied to the element.
    * @type {string}
    */
 		elementClasses: {
-			validator: 'validatorElementClassesFn_'
+			setter: 'setterElementClassesFn_',
+			validator: isString,
+			value: ''
 		},
 
 		/**
@@ -5086,12 +5891,19 @@ babelHelpers;
    * @type {boolean}
    */
 		visible: {
-			validator: core.isBoolean,
+			validator: isBoolean,
 			value: true
 		}
 	};
 
 	Component.COMPONENT_FLAG = '__metal_component__';
+
+	/**
+  * The `ComponentDataManager` class that should be used. This class will be
+  * responsible for handling the component's data. Each component may have its
+  * own implementation.
+  */
+	Component.DATA_MANAGER = ComponentDataManager;
 
 	/**
   * CSS classes to be applied to the element.
@@ -5119,12 +5931,6 @@ babelHelpers;
 	Component.SYNC_UPDATES = false;
 
 	/**
-  * A list with state key names that will automatically be rejected as invalid.
-  * @type {!Array<string>}
-  */
-	Component.INVALID_KEYS = ['components', 'wasRendered'];
-
-	/**
   * Sets a prototype flag to easily determine if a given constructor is for
   * a component or not.
   */
@@ -5135,7 +5941,7 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metalNamed']['metal']['core'];
+	var getFunctionName = this['metalNamed']['metal']['getFunctionName'];
 
 	/**
   * The component registry is used to register components, so they can
@@ -5155,7 +5961,7 @@ babelHelpers;
     * Gets the constructor function for the given component name, or
     * undefined if it hasn't been registered yet.
     * @param {string} name The component's name.
-    * @return {?function}
+    * @return {?function()}
     * @static
     */
 			value: function getConstructor(name) {
@@ -5183,7 +5989,7 @@ babelHelpers;
 					if (constructorFn.hasOwnProperty('NAME')) {
 						name = constructorFn.NAME;
 					} else {
-						name = core.getFunctionName(constructorFn);
+						name = getFunctionName(constructorFn);
 					}
 				}
 				constructorFn.NAME = name;
@@ -5209,11 +6015,13 @@ babelHelpers;
 
 (function () {
   var Component = this['metal']['Component'];
+  var ComponentDataManager = this['metal']['ComponentDataManager'];
   var ComponentRegistry = this['metal']['ComponentRegistry'];
   var ComponentRenderer = this['metal']['ComponentRenderer'];
   this['metal']['component'] = Component;
   this['metalNamed']['component'] = this['metalNamed']['component'] || {};
   this['metalNamed']['component']['Component'] = Component;
+  this['metalNamed']['component']['ComponentDataManager'] = ComponentDataManager;
   this['metalNamed']['component']['ComponentRegistry'] = ComponentRegistry;
   this['metalNamed']['component']['ComponentRenderer'] = ComponentRenderer;
 }).call(this);
@@ -5402,8 +6210,8 @@ babelHelpers;
         return;
       }
 
-      var nodeName = node.nodeName.toLowerCase();
       var isElement = node instanceof Element;
+      var nodeName = isElement ? node.localName : node.nodeName;
       var key = isElement ? node.getAttribute('key') : null;
       var data = initData(node, nodeName, key);
 
@@ -5792,7 +6600,7 @@ babelHelpers;
 
       if ('production' !== 'production') {}
 
-      if (node !== currentNode) {
+      if (node !== currentNode && node.parentNode) {
         removeChild(currentParent, node, getData(currentParent).keyMap);
       }
 
@@ -6566,7 +7374,7 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metal']['metal'];
+	var isString = this['metalNamed']['metal']['isString'];
 
 	/**
   * Utility functions used to handle incremental dom calls.
@@ -6621,13 +7429,13 @@ babelHelpers;
 			/**
     * Checks if the given tag represents a metal component.
     * @param {string} tag
-    * @param {boolean}
+    * @return {boolean}
     */
 
 		}, {
 			key: 'isComponentTag',
 			value: function isComponentTag(tag) {
-				return !core.isString(tag) || tag[0] === tag[0].toUpperCase();
+				return !isString(tag) || tag[0] === tag[0].toUpperCase();
 			}
 		}]);
 		return IncrementalDomUtils;
@@ -6638,7 +7446,7 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metal']['metal'];
+	var isDef = this['metalNamed']['metal']['isDef'];
 	var IncrementalDomAop = this['metal']['IncrementalDomAop'];
 	var IncrementalDomUtils = this['metal']['IncrementalDomUtils'];
 
@@ -6660,17 +7468,18 @@ babelHelpers;
     * Captures all child elements from incremental dom calls.
     * @param {!IncrementalDomRenderer} renderer The renderer that is capturing
     *   children.
-    * @param {!function} callback Function to be called when children have all
+    * @param {!function()} callback Function to be called when children have all
     *     been captured.
    	 */
 			value: function capture(renderer, callback) {
 				renderer_ = renderer;
 				callback_ = callback;
 				tree_ = {
-					config: {
+					props: {
 						children: []
 					}
 				};
+				tree_.config = tree_.props;
 				currentParent_ = tree_;
 				isCapturing_ = true;
 				IncrementalDomAop.startInterception({
@@ -6681,8 +7490,32 @@ babelHelpers;
 			}
 
 			/**
+    * Returns the owner of the current child node being rendered (or nothing
+    * if there's no child being rendered).
+    * @return {ComponentRenderer}
+    */
+
+		}, {
+			key: 'getCurrentOwner',
+			value: function getCurrentOwner() {
+				return currNodeOwner_;
+			}
+
+			/**
+    * Gets the node's original owner's renderer.
+    * @param {!Object} node
+    * @return {ComponentRenderer}
+    */
+
+		}, {
+			key: 'getOwner',
+			value: function getOwner(node) {
+				return node[IncrementalDomChildren.CHILD_OWNER];
+			}
+
+			/**
     * Renders a children tree through incremental dom.
-    * @param {!{args: Array, !children: Array, isText: ?boolean}}
+    * @param {!{args: Array, children: !Array, isText: ?boolean}}
     * @param {function()=} opt_skipNode Optional function that is called for
     *     each node to be rendered. If it returns true, the node will be skipped.
     * @protected
@@ -6697,30 +7530,34 @@ babelHelpers;
 					return;
 				}
 
+				currNodeOwner_ = IncrementalDomChildren.getOwner(tree);
 				if (opt_skipNode && opt_skipNode(tree)) {
+					currNodeOwner_ = null;
 					return;
 				}
 
-				if (core.isDef(tree.text)) {
+				if (isDef(tree.text)) {
 					var args = tree.args ? tree.args : [];
 					args[0] = tree.text;
 					IncrementalDOM.text.apply(null, args);
 				} else {
-					var _args = IncrementalDomUtils.buildCallFromConfig(tree.tag, tree.config);
+					var _args = IncrementalDomUtils.buildCallFromConfig(tree.tag, tree.props);
 					IncrementalDOM.elementOpen.apply(null, _args);
-					if (tree.config.children) {
-						for (var i = 0; i < tree.config.children.length; i++) {
-							IncrementalDomChildren.render(tree.config.children[i], opt_skipNode);
+					if (tree.props.children) {
+						for (var i = 0; i < tree.props.children.length; i++) {
+							IncrementalDomChildren.render(tree.props.children[i], opt_skipNode);
 						}
 					}
 					IncrementalDOM.elementClose(tree.tag);
 				}
+				currNodeOwner_ = null;
 			}
 		}]);
 		return IncrementalDomChildren;
 	}();
 
 	var callback_;
+	var currNodeOwner_;
 	var currentParent_;
 	var isCapturing_ = false;
 	var renderer_;
@@ -6745,11 +7582,9 @@ babelHelpers;
 			}
 		} else {
 			child.tag = args[0];
-			child.config = IncrementalDomUtils.buildConfigFromCall(args);
-			if (IncrementalDomUtils.isComponentTag(child.tag)) {
-				child.config.ref = core.isDefAndNotNull(child.config.ref) ? child.config.ref : renderer_.buildRef(args[0]);
-			}
-			child.config.children = [];
+			child.props = IncrementalDomUtils.buildConfigFromCall(args);
+			child.props.children = [];
+			child.config = child.props;
 		}
 
 		addChildToTree(child);
@@ -6757,7 +7592,7 @@ babelHelpers;
 	}
 
 	function addChildToTree(child) {
-		currentParent_.config.children.push(child);
+		currentParent_.props.children.push(child);
 	}
 
 	/**
@@ -6820,6 +7655,7 @@ babelHelpers;
 
 (function () {
 	var comps_ = [];
+	var disposing_ = false;
 
 	var IncrementalDomUnusedComponents = function () {
 		function IncrementalDomUnusedComponents() {
@@ -6834,39 +7670,38 @@ babelHelpers;
     * time this function was scheduled.
     */
 			value: function disposeUnused() {
-				for (var i = 0; i < comps_.length; i++) {
-					if (!comps_[i].isDisposed()) {
-						var renderer = comps_[i].getRenderer();
-						if (!renderer.getParent()) {
-							// Don't let disposing cause the element to be removed, since it may
-							// be currently being reused by another component.
-							comps_[i].element = null;
+				if (disposing_) {
+					return;
+				}
+				disposing_ = true;
 
-							var ref = comps_[i].config.ref;
-							var owner = renderer.getOwner();
-							if (owner.components[ref] === comps_[i]) {
-								owner.disposeSubComponents([ref]);
-							} else {
-								comps_[i].dispose();
-							}
-						}
+				for (var i = 0; i < comps_.length; i++) {
+					var comp = comps_[i];
+					if (!comp.isDisposed() && !comp.getRenderer().getParent()) {
+						// Don't let disposing cause the element to be removed, since it may
+						// be currently being reused by another component.
+						comp.element = null;
+						comp.dispose();
 					}
 				}
 				comps_ = [];
+				disposing_ = false;
 			}
 
 			/**
     * Schedules the given components to be checked and disposed if not used
     * anymore, when `IncrementalDomUnusedComponents.disposeUnused` is called.
-    * @param {!Array<!Component} comps
+    * @param {!Array<!Component>} comps
     */
 
 		}, {
 			key: 'schedule',
 			value: function schedule(comps) {
 				for (var i = 0; i < comps.length; i++) {
-					comps[i].getRenderer().parent_ = null;
-					comps_.push(comps[i]);
+					if (!comps[i].isDisposed()) {
+						comps[i].getRenderer().parent_ = null;
+						comps_.push(comps[i]);
+					}
 				}
 			}
 		}]);
@@ -6878,9 +7713,17 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metalNamed']['metal']['core'];
+	var getCompatibilityModeData = this['metalNamed']['metal']['getCompatibilityModeData'];
+	var getUid = this['metalNamed']['metal']['getUid'];
+	var isBoolean = this['metalNamed']['metal']['isBoolean'];
+	var isDef = this['metalNamed']['metal']['isDef'];
+	var isDefAndNotNull = this['metalNamed']['metal']['isDefAndNotNull'];
+	var isString = this['metalNamed']['metal']['isString'];
 	var object = this['metalNamed']['metal']['object'];
-	var dom = this['metal']['dom'];
+	var append = this['metalNamed']['dom']['append'];
+	var delegate = this['metalNamed']['dom']['delegate'];
+	var domData = this['metalNamed']['dom']['domData'];
+	var exitDocument = this['metalNamed']['dom']['exitDocument'];
 	var Component = this['metalNamed']['component']['Component'];
 	var ComponentRegistry = this['metalNamed']['component']['ComponentRegistry'];
 	var ComponentRenderer = this['metalNamed']['component']['ComponentRenderer'];
@@ -6905,20 +7748,16 @@ babelHelpers;
 			var _this = babelHelpers.possibleConstructorReturn(this, (IncrementalDomRenderer.__proto__ || Object.getPrototypeOf(IncrementalDomRenderer)).call(this, comp));
 
 			comp.context = {};
-			_this.setConfig_(comp, comp.getInitialConfig());
-			_this.changes_ = {};
+			comp.refs = {};
+			_this.config_ = comp.getInitialConfig();
+			_this.childComponents_ = [];
+			_this.clearChanges_();
 			comp.on('attached', _this.handleAttached_.bind(_this));
-
-			if (!_this.component_.constructor.SYNC_UPDATES_MERGED) {
-				// If the component is being updated synchronously we'll just reuse the
-				// `handleComponentRendererStateKeyChanged_` function from
-				// `ComponentRenderer`.
-				comp.on('stateKeyChanged', _this.handleStateKeyChanged_.bind(_this));
-			}
 
 			// Binds functions that will be used many times, to avoid creating new
 			// functions each time.
 			_this.handleInterceptedAttributesCall_ = _this.handleInterceptedAttributesCall_.bind(_this);
+			_this.handleInterceptedCloseCall_ = _this.handleInterceptedCloseCall_.bind(_this);
 			_this.handleInterceptedOpenCall_ = _this.handleInterceptedOpenCall_.bind(_this);
 			_this.handleChildrenCaptured_ = _this.handleChildrenCaptured_.bind(_this);
 			_this.handleChildRender_ = _this.handleChildRender_.bind(_this);
@@ -6927,18 +7766,41 @@ babelHelpers;
 		}
 
 		/**
-   * Attaches inline listeners found on the first component render, since those
-   * may come from existing elements on the page that already have
-   * data-on[eventname] attributes set to its final value. This won't trigger
-   * `handleInterceptedAttributesCall_`, so we need manual work to guarantee
-   * that projects using progressive enhancement like this will still work.
-   * @param {!Element} node
+   * Adds the given css classes to the specified arguments for an incremental
+   * dom call, merging with the existing value if there is one.
+   * @param {string} elementClasses
    * @param {!Array} args
    * @protected
    */
 
 
 		babelHelpers.createClass(IncrementalDomRenderer, [{
+			key: 'addElementClasses_',
+			value: function addElementClasses_(elementClasses, args) {
+				for (var i = 3; i < args.length; i += 2) {
+					if (args[i] === 'class') {
+						args[i + 1] = this.removeDuplicateClasses_(args[i + 1] + ' ' + elementClasses);
+						return;
+					}
+				}
+				while (args.length < 3) {
+					args.push(null);
+				}
+				args.push('class', elementClasses);
+			}
+
+			/**
+    * Attaches inline listeners found on the first component render, since those
+    * may come from existing elements on the page that already have
+    * data-on[eventname] attributes set to its final value. This won't trigger
+    * `handleInterceptedAttributesCall_`, so we need manual work to guarantee
+    * that projects using progressive enhancement like this will still work.
+    * @param {!Element} node
+    * @param {!Array} args
+    * @protected
+    */
+
+		}, {
 			key: 'attachDecoratedListeners_',
 			value: function attachDecoratedListeners_(node, args) {
 				if (!this.component_.wasRendered) {
@@ -6972,7 +7834,7 @@ babelHelpers;
 
 				element[key] = fn;
 				if (fn) {
-					if (core.isString(fn)) {
+					if (isString(fn)) {
 						if (key[0] === 'd') {
 							// Allow data-on[eventkey] listeners to stay in the dom, as they
 							// won't cause conflicts.
@@ -6980,15 +7842,14 @@ babelHelpers;
 						}
 						fn = this.component_.getListenerFn(fn);
 					}
-					element[handleKey] = dom.delegate(document, eventName, element, fn);
+					element[handleKey] = delegate(document, eventName, element, fn);
 				} else {
 					element.removeAttribute(key);
 				}
 			}
 
 			/**
-    * Builds the "children" config property to be passed to the current
-    * component.
+    * Builds the "children" array to be passed to the current component.
     * @param {!Array<!Object>} children
     * @return {!Array<!Object>}
     * @protected
@@ -7001,60 +7862,159 @@ babelHelpers;
 			}
 
 			/**
-    * Builds the key for the next component that is found.
-    * @param {string} tag The component's tag.
-    * @return {string}
+    * Returns an array with the args that should be passed to the component's
+    * `shouldUpdate` method. This can be overridden by sub classes to change
+    * what the method should receive.
+    * @return {!Array}
+    * @protected
     */
 
 		}, {
-			key: 'buildRef',
-			value: function buildRef(tag) {
-				var ctor = core.isString(tag) ? ComponentRegistry.getConstructor(tag) : tag;
-				var prefix = this.currentPrefix_ + core.getUid(ctor, true);
-				var count = this.generatedRefCount_[prefix] || 0;
-				this.generatedRefCount_[prefix] = count + 1;
-				return prefix + 'sub' + count;
+			key: 'buildShouldUpdateArgs_',
+			value: function buildShouldUpdateArgs_() {
+				return [this.changes_];
 			}
 
 			/**
-    * Gets the component being currently rendered via `IncrementalDomRenderer`.
+    * Clears the changes object.
+    * @protected;
+    */
+
+		}, {
+			key: 'clearChanges_',
+			value: function clearChanges_() {
+				this.changes_ = {};
+			}
+
+			/**
+    * @inheritDoc
+    */
+
+		}, {
+			key: 'disposeInternal',
+			value: function disposeInternal() {
+				babelHelpers.get(IncrementalDomRenderer.prototype.__proto__ || Object.getPrototypeOf(IncrementalDomRenderer.prototype), 'disposeInternal', this).call(this);
+
+				var comp = this.component_;
+				var ref = this.config_.ref;
+				var owner = this.getOwner();
+				if (owner && owner.components && owner.components[ref] === comp) {
+					delete owner.components[ref];
+				}
+
+				for (var i = 0; i < this.childComponents_.length; i++) {
+					var child = this.childComponents_[i];
+					if (!child.isDisposed()) {
+						child.element = null;
+						child.dispose();
+					}
+				}
+				this.childComponents_ = null;
+			}
+
+			/**
+    * Removes the most recent component from the queue of rendering components.
+    */
+
+		}, {
+			key: 'getEventFromListenerAttr_',
+
+
+			/**
+    * Returns the event name if the given attribute is a listener (of the form
+    * "on<EventName>"), or null if it isn't.
+    * @param {string} attr
+    * @return {?string}
+    * @protected
+    */
+			value: function getEventFromListenerAttr_(attr) {
+				var matches = IncrementalDomRenderer.LISTENER_REGEX.exec(attr);
+				var eventName = matches ? matches[1] ? matches[1] : matches[2] : null;
+				return eventName ? eventName.toLowerCase() : null;
+			}
+
+			/**
+    * Gets the component that is this component's owner (that is, the one that
+    * passed its data and holds its ref), or null if there's none.
     * @return {Component}
     */
 
 		}, {
-			key: 'getSubComponent_',
+			key: 'getOwner',
+			value: function getOwner() {
+				return this.owner_;
+			}
 
+			/**
+    * Gets the component that is this component's parent (that is, the one that
+    * actually rendered it), or null if there's no parent.
+    * @return {Component}
+    */
+
+		}, {
+			key: 'getParent',
+			value: function getParent() {
+				return this.parent_;
+			}
+
+			/**
+    * Returns the "ref" to be used for a component. Uses "key" as "ref" when
+    * compatibility mode is on for the current renderer.
+    * @param {!Object} config
+    * @param {?string} ref
+    * @protected
+    */
+
+		}, {
+			key: 'getRef_',
+			value: function getRef_(config) {
+				var compatData = getCompatibilityModeData();
+				if (compatData) {
+					var renderers = compatData.renderers;
+					var useKey = !renderers || renderers.indexOf(this.constructor) !== -1 || renderers.indexOf(this.constructor.RENDERER_NAME) !== -1;
+					if (useKey && config.key && !config.ref) {
+						return config.key;
+					}
+				}
+				return config.ref;
+			}
 
 			/**
     * Gets the sub component referenced by the given tag and config data,
     * creating it if it doesn't yet exist.
     * @param {string|!Function} tagOrCtor The tag name.
     * @param {!Object} config The config object for the sub component.
+    * @param {!Component} owner
     * @return {!Component} The sub component.
     * @protected
     */
-			value: function getSubComponent_(tagOrCtor, config) {
-				var ConstructorFn = tagOrCtor;
-				if (core.isString(ConstructorFn)) {
-					ConstructorFn = ComponentRegistry.getConstructor(tagOrCtor);
+
+		}, {
+			key: 'getSubComponent_',
+			value: function getSubComponent_(tagOrCtor, config, owner) {
+				var Ctor = tagOrCtor;
+				if (isString(Ctor)) {
+					Ctor = ComponentRegistry.getConstructor(tagOrCtor);
 				}
 
-				var comp = this.component_.components[config.ref];
-				if (comp && comp.constructor !== ConstructorFn) {
-					comp = null;
+				var ref = this.getRef_(config);
+				var data = IncrementalDomRenderer.getCurrentData();
+				var comp;
+				if (isDef(ref)) {
+					comp = this.match_(owner.components[ref], Ctor, config);
+					owner.addSubComponent(ref, comp);
+					owner.refs[ref] = comp;
+				} else if (isDef(config.key)) {
+					comp = this.match_(data.prevComps.keys[config.key], Ctor, config);
+					data.currComps.keys[config.key] = comp;
+				} else {
+					var type = getUid(Ctor, true);
+					data.currComps.order[type] = data.currComps.order[type] || [];
+					var order = data.currComps.order[type];
+					comp = this.match_((data.prevComps.order[type] || [])[order.length], Ctor, config);
+					order.push(comp);
 				}
 
-				if (!comp) {
-					comp = new ConstructorFn(config, false);
-					this.component_.addSubComponent(config.ref, comp);
-				}
-
-				if (comp.wasRendered) {
-					this.setConfig_(comp, config);
-					comp.getRenderer().startSkipUpdates();
-					comp.setState(config);
-					comp.getRenderer().stopSkipUpdates();
-				}
 				return comp;
 			}
 
@@ -7073,27 +8033,95 @@ babelHelpers;
 				if (!element || !element.parentNode) {
 					var parent = document.createElement('div');
 					if (element) {
-						dom.append(parent, element);
+						append(parent, element);
 					}
 					return parent;
 				}
 			}
 
 			/**
-    * Removes the most recent component from the queue of rendering components.
-    */
-
-		}, {
-			key: 'handleAttached_',
-
-
-			/**
     * Handles the `attached` listener. Stores attach data.
     * @param {!Object} data
     * @protected
     */
+
+		}, {
+			key: 'handleAttached_',
 			value: function handleAttached_(data) {
 				this.attachData_ = data;
+			}
+
+			/**
+    * Handles the event of children having finished being captured.
+    * @param {!Object} The captured children in tree format.
+    * @protected
+    */
+
+		}, {
+			key: 'handleChildrenCaptured_',
+			value: function handleChildrenCaptured_(tree) {
+				var _componentToRender_ = this.componentToRender_;
+				var props = _componentToRender_.props;
+				var tag = _componentToRender_.tag;
+
+				props.children = this.buildChildren_(tree.props.children);
+				this.componentToRender_ = null;
+				this.renderFromTag_(tag, props);
+			}
+
+			/**
+    * Handles a child being rendered via `IncrementalDomChildren.render`. Skips
+    * component nodes so that they can be rendered the correct way without
+    * having to recapture both them and their children via incremental dom.
+    * @param {!Object} node
+    * @return {boolean}
+    * @protected
+    */
+
+		}, {
+			key: 'handleChildRender_',
+			value: function handleChildRender_(node) {
+				if (node.tag && IncrementalDomUtils.isComponentTag(node.tag)) {
+					node.props.children = this.buildChildren_(node.props.children);
+					this.renderFromTag_(node.tag, node.props);
+					return true;
+				}
+			}
+
+			/**
+    * @inheritDoc
+    */
+
+		}, {
+			key: 'handleDataManagerCreated_',
+			value: function handleDataManagerCreated_() {
+				babelHelpers.get(IncrementalDomRenderer.prototype.__proto__ || Object.getPrototypeOf(IncrementalDomRenderer.prototype), 'handleDataManagerCreated_', this).call(this);
+
+				var manager = this.component_.getDataManager();
+				if (!this.component_.constructor.SYNC_UPDATES_MERGED) {
+					// If the component is being updated synchronously we'll just reuse the
+					// `handleComponentRendererStateKeyChanged_` function from
+					// `ComponentRenderer`.
+					manager.on('dataPropChanged', this.handleDataPropChanged_.bind(this));
+				}
+
+				manager.add('children', {
+					validator: Array.isArray,
+					value: emptyChildren_
+				}, this.config_.children || emptyChildren_);
+			}
+
+			/**
+    * Handles the `dataPropChanged` event. Stores data that has changed since the
+    * last render.
+    * @param {!Object} data
+    * @protected
+    */
+
+		}, {
+			key: 'handleDataPropChanged_',
+			value: function handleDataPropChanged_(data) {
+				this.changes_[data.key] = data;
 			}
 
 			/**
@@ -7120,7 +8148,7 @@ babelHelpers;
 					// "checked" as an attribute only, which can cause bugs since that won't
 					// necessarily check/uncheck the element it's set on. See
 					// https://github.com/google/incremental-dom/issues/198 for more details.
-					value = core.isDefAndNotNull(value) && value !== false;
+					value = isDefAndNotNull(value) && value !== false;
 				}
 
 				if (name === 'value' && element.value !== value) {
@@ -7134,7 +8162,7 @@ babelHelpers;
 					element[name] = value;
 				}
 
-				if (core.isBoolean(value)) {
+				if (isBoolean(value)) {
 					// Incremental dom sets boolean values as string data attributes, which
 					// is counter intuitive. This changes the behavior to use the actual
 					// boolean value.
@@ -7150,58 +8178,20 @@ babelHelpers;
 			}
 
 			/**
-    * Handles the event of children having finished being captured.
-    * @param {!Object} The captured children in tree format.
+    * Handles an intercepted call to the `elementClose` function from incremental
+    * dom.
+    * @param {!function()} originalFn The original function before interception.
+    * @param {string} tag
     * @protected
     */
 
 		}, {
-			key: 'handleChildrenCaptured_',
-			value: function handleChildrenCaptured_(tree) {
-				var _componentToRender_ = this.componentToRender_;
-				var config = _componentToRender_.config;
-				var tag = _componentToRender_.tag;
-
-				config.children = this.buildChildren_(tree.config.children);
-				this.componentToRender_ = null;
-				this.currentPrefix_ = this.prevPrefix_;
-				this.prevPrefix_ = null;
-				this.renderFromTag_(tag, config);
-			}
-
-			/**
-    * Handles a child being rendered via `IncrementalDomChildren.render`. Skips
-    * component nodes so that they can be rendered the correct way without
-    * having to recapture both them and their children via incremental dom.
-    * @param {!Object} node
-    * @return {boolean}
-    * @protected
-    */
-
-		}, {
-			key: 'handleChildRender_',
-			value: function handleChildRender_(node) {
-				if (node.tag && IncrementalDomUtils.isComponentTag(node.tag)) {
-					node.config.children = this.buildChildren_(node.config.children);
-					this.renderFromTag_(node.tag, node.config);
-					return true;
-				}
-			}
-
-			/**
-    * Handles the `stateKeyChanged` event. Overrides original method from
-    * `ComponentRenderer` to guarantee that `IncrementalDomRenderer`'s logic
-    * will run first.
-    * @param {!Object} data
-    * @override
-    * @protected
-    */
-
-		}, {
-			key: 'handleComponentRendererStateKeyChanged_',
-			value: function handleComponentRendererStateKeyChanged_(data) {
-				this.handleStateKeyChanged_(data);
-				babelHelpers.get(IncrementalDomRenderer.prototype.__proto__ || Object.getPrototypeOf(IncrementalDomRenderer.prototype), 'handleComponentRendererStateKeyChanged_', this).call(this, data);
+			key: 'handleInterceptedCloseCall_',
+			value: function handleInterceptedCloseCall_(originalFn, tag) {
+				this.emit(IncrementalDomRenderer.ELEMENT_CLOSED, { tag: tag });
+				var element = originalFn(tag);
+				this.resetData_(domData.get(element).incDomData_);
+				return element;
 			}
 
 			/**
@@ -7223,9 +8213,25 @@ babelHelpers;
 			}
 
 			/**
+    * Handles the `dataPropChanged` event. Overrides original method from
+    * `ComponentRenderer` to guarantee that `IncrementalDomRenderer`'s logic
+    * will run first.
+    * @param {!Object} data
+    * @override
+    * @protected
+    */
+
+		}, {
+			key: 'handleManagerDataPropChanged_',
+			value: function handleManagerDataPropChanged_(data) {
+				this.handleDataPropChanged_(data);
+				babelHelpers.get(IncrementalDomRenderer.prototype.__proto__ || Object.getPrototypeOf(IncrementalDomRenderer.prototype), 'handleManagerDataPropChanged_', this).call(this, data);
+			}
+
+			/**
     * Handles an intercepted call to the `elementOpen` function from incremental
-    * dom, done for a regular element. Adds any inline listeners found and makes
-    * sure that component root elements are always reused.
+    * dom, done for a regular element. Adds any inline listeners found on the
+    * first render and makes sure that component root elements are always reused.
     * @param {!function()} originalFn The original function before interception.
     * @protected
     */
@@ -7233,34 +8239,33 @@ babelHelpers;
 		}, {
 			key: 'handleRegularCall_',
 			value: function handleRegularCall_(originalFn) {
-				var currComp = IncrementalDomRenderer.getComponentBeingRendered();
-				var currRenderer = currComp.getRenderer();
-
 				for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
 					args[_key - 1] = arguments[_key];
 				}
 
-				if (!currRenderer.rootElementReached_ && currComp.config.key) {
-					args[1] = currComp.config.key;
+				this.emit(IncrementalDomRenderer.ELEMENT_OPENED, { args: args });
+				var currComp = IncrementalDomRenderer.getComponentBeingRendered();
+				var currRenderer = currComp.getRenderer();
+				if (!currRenderer.rootElementReached_) {
+					if (currRenderer.config_.key) {
+						args[1] = currRenderer.config_.key;
+					}
+					var elementClasses = currComp.getDataManager().get('elementClasses');
+					if (elementClasses) {
+						this.addElementClasses_(elementClasses, args);
+					}
 				}
 
 				var node = originalFn.apply(null, args);
 				this.attachDecoratedListeners_(node, args);
 				this.updateElementIfNotReached_(node);
+
+				var config = IncrementalDomUtils.buildConfigFromCall(args);
+				if (isDefAndNotNull(config.ref)) {
+					var owner = IncrementalDomChildren.getCurrentOwner() || this;
+					owner.getComponent().refs[config.ref] = node;
+				}
 				return node;
-			}
-
-			/**
-    * Handles the `stateKeyChanged` event. Stores state properties that have
-    * changed since the last render.
-    * @param {!Object} data
-    * @protected
-    */
-
-		}, {
-			key: 'handleStateKeyChanged_',
-			value: function handleStateKeyChanged_(data) {
-				this.changes_[data.key] = data;
 			}
 
 			/**
@@ -7278,17 +8283,24 @@ babelHelpers;
 					args[_key2 - 1] = arguments[_key2];
 				}
 
-				var config = IncrementalDomUtils.buildConfigFromCall(args);
-				config.ref = core.isDefAndNotNull(config.ref) ? config.ref : this.buildRef(args[0]);
+				var props = IncrementalDomUtils.buildConfigFromCall(args);
 				this.componentToRender_ = {
-					config: config,
+					props: props,
 					tag: args[0]
 				};
-
-				this.prevPrefix_ = this.currentPrefix_;
-				this.currentPrefix_ = config.ref;
-				this.generatedRefCount_[this.currentPrefix_] = 0;
 				IncrementalDomChildren.capture(this, this.handleChildrenCaptured_);
+			}
+
+			/**
+    * Checks if the component's data has changed.
+    * @return {boolean}
+    * @protected
+    */
+
+		}, {
+			key: 'hasDataChanged_',
+			value: function hasDataChanged_() {
+				return Object.keys(this.changes_).length > 0;
 			}
 
 			/**
@@ -7301,6 +8313,7 @@ babelHelpers;
 			value: function intercept_() {
 				IncrementalDomAop.startInterception({
 					attributes: this.handleInterceptedAttributesCall_,
+					elementClose: this.handleInterceptedCloseCall_,
 					elementOpen: this.handleInterceptedOpenCall_
 				});
 			}
@@ -7312,44 +8325,98 @@ babelHelpers;
     */
 
 		}, {
-			key: 'getEventFromListenerAttr_',
+			key: 'isMatch_',
 
 
 			/**
-    * Returns the event name if the given attribute is a listener (of the form
-    * "on<EventName>"), or null if it isn't.
-    * @param {string} attr
-    * @return {?string}
+    * Checks if the given component can be a match for a constructor.
+    * @param {!Component} comp
+    * @param {!function()} Ctor
+    * @return {boolean}
     * @protected
     */
-			value: function getEventFromListenerAttr_(attr) {
-				var matches = IncrementalDomRenderer.LISTENER_REGEX.exec(attr);
-				var eventName = matches ? matches[1] ? matches[1] : matches[2] : null;
-				return eventName ? eventName.toLowerCase() : null;
+			value: function isMatch_(comp, Ctor) {
+				if (!comp || comp.constructor !== Ctor || comp.isDisposed()) {
+					return false;
+				}
+				return comp.getRenderer().getOwner() === this.component_;
 			}
 
 			/**
-    * Gets the component that is this component's parent (that is, the one that
-    * actually rendered it), or null if there's no parent.
-    * @return {Component}
+    * Returns the given component if it matches the specified constructor
+    * function. Otherwise, returns a new instance of the given constructor. On
+    * both cases the component's state and config will be updated.
+    * @param {Component} comp
+    * @param {!function()} Ctor
+    * @param {!Object} config
+    * @return {!Component}
+    * @protected
     */
 
 		}, {
-			key: 'getParent',
-			value: function getParent() {
-				return this.parent_;
+			key: 'match_',
+			value: function match_(comp, Ctor, config) {
+				if (!this.isMatch_(comp, Ctor)) {
+					comp = new Ctor(config, false);
+				}
+				if (comp.wasRendered) {
+					comp.getRenderer().startSkipUpdates();
+					comp.getDataManager().replaceNonInternal(config);
+					comp.getRenderer().stopSkipUpdates();
+				}
+				comp.getRenderer().config_ = config;
+				return comp;
 			}
 
 			/**
-    * Gets the component that is this component's owner (that is, the one that
-    * passed its config properties and holds its ref), or null if there's none.
-    * @return {Component}
+    * Patches the component's element with the incremental dom function calls
+    * done by `renderInsidePatchDontSkip_`.
     */
 
 		}, {
-			key: 'getOwner',
-			value: function getOwner() {
-				return this.owner_;
+			key: 'patch',
+			value: function patch() {
+				if (!this.component_.element && this.parent_) {
+					// If the component has no content but was rendered from another component,
+					// we'll need to patch this parent to make sure that any new content will
+					// be added in the right place.
+					this.parent_.getRenderer().patch();
+					return;
+				}
+
+				var tempParent = this.guaranteeParent_();
+				if (tempParent) {
+					IncrementalDOM.patch(tempParent, this.renderInsidePatchDontSkip_);
+					exitDocument(this.component_.element);
+					if (this.component_.element && this.component_.inDocument) {
+						this.component_.renderElement_(this.attachData_.parent, this.attachData_.sibling);
+					}
+				} else {
+					var element = this.component_.element;
+					IncrementalDOM.patchOuter(element, this.renderInsidePatchDontSkip_);
+				}
+			}
+
+			/**
+    * Removes duplicate css classes from the given string.
+    * @param {string} cssClasses
+    * @return {string}
+    * @protected
+    */
+
+		}, {
+			key: 'removeDuplicateClasses_',
+			value: function removeDuplicateClasses_(cssClasses) {
+				var noDuplicates = [];
+				var all = cssClasses.split(/\s+/);
+				var used = {};
+				for (var i = 0; i < all.length; i++) {
+					if (!used[all[i]]) {
+						used[all[i]] = true;
+						noDuplicates.push(all[i]);
+					}
+				}
+				return noDuplicates.join(' ');
 			}
 
 			/**
@@ -7359,7 +8426,7 @@ babelHelpers;
     or a component constructor.
     * @param {Object|Element=} opt_dataOrElement Optional config data for the
     *     function or parent for the rendered content.
-    * @param {Element=} opt_element Optional parent for the rendered content.
+    * @param {Element=} opt_parent Optional parent for the rendered content.
     * @return {!Component} The rendered component's instance.
     */
 
@@ -7404,7 +8471,7 @@ babelHelpers;
 		}, {
 			key: 'renderFromTag_',
 			value: function renderFromTag_(tag, config) {
-				if (core.isString(tag) || tag.prototype.getRenderer) {
+				if (isString(tag) || tag.prototype.getRenderer) {
 					var comp = this.renderSubComponent_(tag, config);
 					this.updateElementIfNotReached_(comp.element);
 					return comp.element;
@@ -7438,7 +8505,7 @@ babelHelpers;
 		}, {
 			key: 'renderInsidePatch',
 			value: function renderInsidePatch() {
-				if (this.component_.wasRendered && !this.shouldUpdate(this.changes_) && IncrementalDOM.currentPointer() === this.component_.element) {
+				if (this.component_.wasRendered && !this.shouldUpdate() && IncrementalDOM.currentPointer() === this.component_.element) {
 					if (this.component_.element) {
 						IncrementalDOM.skipNode();
 					}
@@ -7457,23 +8524,20 @@ babelHelpers;
 			key: 'renderInsidePatchDontSkip_',
 			value: function renderInsidePatchDontSkip_() {
 				IncrementalDomRenderer.startedRenderingComponent(this.component_);
-				this.changes_ = {};
+				this.clearChanges_();
 				this.rootElementReached_ = false;
-				IncrementalDomUnusedComponents.schedule(this.childComponents_ || []);
+				IncrementalDomUnusedComponents.schedule(this.childComponents_);
 				this.childComponents_ = [];
-				this.generatedRefCount_ = {};
-				this.listenersToAttach_ = [];
-				this.currentPrefix_ = '';
+				this.component_.refs = {};
 				this.intercept_();
 				this.renderIncDom();
 				IncrementalDomAop.stopInterception();
 				if (!this.rootElementReached_) {
 					this.component_.element = null;
-				} else {
-					this.component_.addElementClasses();
 				}
 				this.emit('rendered', !this.isRendered_);
 				IncrementalDomRenderer.finishedRenderingComponent();
+				this.resetData_(this.incDomData_);
 			}
 
 			/**
@@ -7490,14 +8554,20 @@ babelHelpers;
 		}, {
 			key: 'renderSubComponent_',
 			value: function renderSubComponent_(tagOrCtor, config) {
-				var comp = this.getSubComponent_(tagOrCtor, config);
+				var ownerRenderer = IncrementalDomChildren.getCurrentOwner() || this;
+				var owner = ownerRenderer.getComponent();
+				var comp = this.getSubComponent_(tagOrCtor, config, owner);
 				this.updateContext_(comp);
 				var renderer = comp.getRenderer();
 				if (renderer instanceof IncrementalDomRenderer) {
 					var parentComp = IncrementalDomRenderer.getComponentBeingRendered();
-					parentComp.getRenderer().childComponents_.push(comp);
+					var parentRenderer = parentComp.getRenderer();
+					parentRenderer.childComponents_.push(comp);
 					renderer.parent_ = parentComp;
-					renderer.owner_ = this.component_;
+					renderer.owner_ = owner;
+					if (!config.key && !parentRenderer.rootElementReached_) {
+						config.key = parentRenderer.config_.key;
+					}
 					renderer.renderInsidePatch();
 				} else {
 					console.warn('IncrementalDomRenderer doesn\'t support rendering sub components ' + 'that don\'t use IncrementalDomRenderer as well, like:', comp);
@@ -7509,24 +8579,21 @@ babelHelpers;
 			}
 
 			/**
-    * Sets the component's config object with its new value.
-    * @param {!Component} comp The component to set the config for.
-    * @param {!Object} config
+    * Resets the given incremental dom data object, preparing it for the next
+    * pass.
+    * @param {Object} data
     * @protected
     */
 
 		}, {
-			key: 'setConfig_',
-			value: function setConfig_(comp, config) {
-				var prevConfig = comp.config;
-				comp.config = config;
-				if (core.isFunction(comp.configChanged)) {
-					comp.configChanged(config, prevConfig || {});
+			key: 'resetData_',
+			value: function resetData_(data) {
+				if (data) {
+					data.prevComps.keys = data.currComps.keys;
+					data.prevComps.order = data.currComps.order;
+					data.currComps.keys = {};
+					data.currComps.order = {};
 				}
-				comp.emit('configChanged', {
-					prevVal: prevConfig,
-					newVal: config
-				});
 			}
 
 			/**
@@ -7534,17 +8601,34 @@ babelHelpers;
     * Can be overridden by subclasses or implemented by components to provide
     * customized behavior (only updating when a state property used by the
     * template changes, for example).
-    * @param {!Object} changes
     * @return {boolean}
     */
 
 		}, {
 			key: 'shouldUpdate',
-			value: function shouldUpdate(changes) {
+			value: function shouldUpdate() {
+				if (!this.hasDataChanged_()) {
+					return false;
+				}
 				if (this.component_.shouldUpdate) {
-					return this.component_.shouldUpdate(changes);
+					var _component_;
+
+					return (_component_ = this.component_).shouldUpdate.apply(_component_, babelHelpers.toConsumableArray(this.buildShouldUpdateArgs_()));
 				}
 				return true;
+			}
+
+			/**
+    * Skips the next disposal of children components, by clearing the array as
+    * if there were no children rendered the last time. This can be useful for
+    * allowing components to be reused by other parent components in separate
+    * render update cycles.
+    */
+
+		}, {
+			key: 'skipNextChildrenDisposal',
+			value: function skipNextChildrenDisposal() {
+				this.childComponents_ = [];
 			}
 
 			/**
@@ -7553,37 +8637,8 @@ babelHelpers;
     */
 
 		}, {
-			key: 'patch',
+			key: 'update',
 
-
-			/**
-    * Patches the component's element with the incremental dom function calls
-    * done by `renderIncDom`.
-    */
-			value: function patch() {
-				if (!this.component_.element && this.parent_) {
-					// If the component has no content but was rendered from another component,
-					// we'll need to patch this parent to make sure that any new content will
-					// be added in the right place.
-					this.parent_.getRenderer().patch();
-					return;
-				}
-
-				var tempParent = this.guaranteeParent_();
-				if (tempParent) {
-					IncrementalDOM.patch(tempParent, this.renderInsidePatchDontSkip_);
-					dom.exitDocument(this.component_.element);
-					if (this.component_.element && this.component_.inDocument) {
-						this.component_.renderElement_(this.attachData_.parent, this.attachData_.sibling);
-					}
-				} else {
-					var element = this.component_.element;
-					IncrementalDOM.patchOuter(element, this.renderInsidePatchDontSkip_);
-					if (!this.component_.element) {
-						dom.exitDocument(element);
-					}
-				}
-			}
 
 			/**
     * Updates the renderer's component when state changes, patching its element
@@ -7591,11 +8646,8 @@ babelHelpers;
     * sure that it won't cause a rerender if the only change was for the
     * "element" property.
     */
-
-		}, {
-			key: 'update',
 			value: function update() {
-				if (this.hasChangedBesidesElement_(this.changes_) && this.shouldUpdate(this.changes_)) {
+				if (this.shouldUpdate()) {
 					this.patch();
 				}
 			}
@@ -7637,17 +8689,54 @@ babelHelpers;
 				comp.context = context;
 			}
 		}], [{
-			key: 'getComponentBeingRendered',
-			value: function getComponentBeingRendered() {
-				return renderingComponents_[renderingComponents_.length - 1];
-			}
-		}, {
 			key: 'finishedRenderingComponent',
 			value: function finishedRenderingComponent() {
 				renderingComponents_.pop();
 				if (renderingComponents_.length === 0) {
 					IncrementalDomUnusedComponents.disposeUnused();
 				}
+			}
+
+			/**
+    * Gets the component being currently rendered via `IncrementalDomRenderer`.
+    * @return {Component}
+    */
+
+		}, {
+			key: 'getComponentBeingRendered',
+			value: function getComponentBeingRendered() {
+				return renderingComponents_[renderingComponents_.length - 1];
+			}
+
+			/**
+    * Gets the data object that should be currently used. This object will either
+    * come from the current element being rendered by incremental dom or from
+    * the component instance being rendered (only when the current element is the
+    * component's direct parent).
+    * @return {!Object}
+    */
+
+		}, {
+			key: 'getCurrentData',
+			value: function getCurrentData() {
+				var element = IncrementalDOM.currentElement();
+				var comp = IncrementalDomRenderer.getComponentBeingRendered();
+				var renderer = comp.getRenderer();
+				var obj = renderer;
+				if (renderer.rootElementReached_ && element !== comp.element.parentNode) {
+					obj = domData.get(element);
+				}
+				obj.incDomData_ = obj.incDomData_ || {
+					currComps: {
+						keys: {},
+						order: {}
+					},
+					prevComps: {
+						keys: {},
+						order: {}
+					}
+				};
+				return obj.incDomData_;
 			}
 		}, {
 			key: 'isIncDomNode',
@@ -7678,7 +8767,7 @@ babelHelpers;
 						}, {
 							key: 'render',
 							value: function render() {
-								fn(this.config);
+								fn(this.getRenderer().config_);
 							}
 						}]);
 						return TempComponent;
@@ -7706,7 +8795,17 @@ babelHelpers;
 	var renderingComponents_ = [];
 	var emptyChildren_ = [];
 
+	// Constants used as event names.
+	IncrementalDomRenderer.ELEMENT_OPENED = 'elementOpened';
+	IncrementalDomRenderer.ELEMENT_CLOSED = 'elementClosed';
+
+	// Regex pattern used to find inline listeners.
 	IncrementalDomRenderer.LISTENER_REGEX = /^(?:on([A-Z]\w+))|(?:data-on(\w+))$/;
+
+	// Name of this renderer. Renderers should provide this as a way to identify
+	// them via a simple string (when calling enableCompatibilityMode to add
+	// support to old features for specific renderers for example).
+	IncrementalDomRenderer.RENDERER_NAME = 'incremental-dom';
 
 	this['metal']['IncrementalDomRenderer'] = IncrementalDomRenderer;
 }).call(this);
@@ -12723,7 +13822,9 @@ babelHelpers;
 'use strict';
 
 (function () {
-	var core = this['metalNamed']['metal']['core'];
+	var isFunction = this['metalNamed']['metal']['isFunction'];
+	var isObject = this['metalNamed']['metal']['isObject'];
+	var isString = this['metalNamed']['metal']['isString'];
 	var object = this['metalNamed']['metal']['object'];
 	var ComponentRegistry = this['metalNamed']['component']['ComponentRegistry'];
 	var HTML2IncDom = this['metal']['withParser'];
@@ -12737,28 +13838,21 @@ babelHelpers;
 	var Soy = function (_IncrementalDomRender) {
 		babelHelpers.inherits(Soy, _IncrementalDomRender);
 
-		/**
-   * @inheritDoc
-   */
-		function Soy(comp) {
+		function Soy() {
 			babelHelpers.classCallCheck(this, Soy);
-
-			var _this = babelHelpers.possibleConstructorReturn(this, (Soy.__proto__ || Object.getPrototypeOf(Soy)).call(this, comp));
-
-			_this.addMissingStateKeys_();
-			return _this;
+			return babelHelpers.possibleConstructorReturn(this, (Soy.__proto__ || Object.getPrototypeOf(Soy)).apply(this, arguments));
 		}
-		/**
-   * Adds the template params to the component's state, if they don't exist yet.
-   * @protected
-   */
-
 
 		babelHelpers.createClass(Soy, [{
 			key: 'addMissingStateKeys_',
+
+			/**
+    * Adds the template params to the component's state, if they don't exist yet.
+    * @protected
+    */
 			value: function addMissingStateKeys_() {
 				var elementTemplate = this.component_.constructor.TEMPLATE;
-				if (!core.isFunction(elementTemplate)) {
+				if (!isFunction(elementTemplate)) {
 					return;
 				}
 
@@ -12767,9 +13861,10 @@ babelHelpers;
 
 				var keys = elementTemplate.params || [];
 				var component = this.component_;
+				var state = component.getDataManager().getStateInstance();
 				for (var i = 0; i < keys.length; i++) {
-					if (!component.getStateKeyConfig(keys[i]) && !component[keys[i]]) {
-						component.addToState(keys[i], {}, component.getInitialConfig()[keys[i]]);
+					if (!state.hasStateKey(keys[i]) && !component[keys[i]]) {
+						state.addToState(keys[i], {}, component.getInitialConfig()[keys[i]]);
 					}
 				}
 			}
@@ -12790,14 +13885,8 @@ babelHelpers;
 				var _this2 = this;
 
 				var component = this.component_;
-				var data = object.mixin({}, component.config);
+				var data = object.mixin({}, this.config_);
 				component.getStateKeys().forEach(function (key) {
-					// Get all state values except "element", since it helps performance
-					// and the element shouldn't be referenced inside a soy template anyway.
-					if (key === 'element') {
-						return;
-					}
-
 					var value = component[key];
 					if (_this2.isHtmlParam_(key)) {
 						value = Soy.toIncDom(value);
@@ -12805,7 +13894,7 @@ babelHelpers;
 					data[key] = value;
 				});
 				for (var i = 0; i < params.length; i++) {
-					if (!data[params[i]] && core.isFunction(component[params[i]])) {
+					if (!data[params[i]] && isFunction(component[params[i]])) {
 						data[params[i]] = component[params[i]].bind(component);
 					}
 				}
@@ -12822,6 +13911,28 @@ babelHelpers;
     */
 
 		}, {
+			key: 'handleDataManagerCreated_',
+
+
+			/**
+    * @inheritDoc
+    */
+			value: function handleDataManagerCreated_() {
+				babelHelpers.get(Soy.prototype.__proto__ || Object.getPrototypeOf(Soy.prototype), 'handleDataManagerCreated_', this).call(this);
+				this.addMissingStateKeys_();
+			}
+
+			/**
+    * Handles an intercepted soy template call. If the call is for a component's
+    * main template, then it will be replaced with a call that incremental dom
+    * can use for both handling an instance of that component and rendering it.
+    * @param {!function()} originalFn The original template function that was
+    *     intercepted.
+    * @param {Object} data The data the template was called with.
+    * @protected
+    */
+
+		}, {
 			key: 'isHtmlParam_',
 
 
@@ -12831,7 +13942,8 @@ babelHelpers;
     * @protected
     */
 			value: function isHtmlParam_(name) {
-				if (this.component_.getStateKeyConfig(name).isHtml) {
+				var state = this.component_.getDataManager().getStateInstance();
+				if (state.getStateKeyConfig(name).isHtml) {
 					return true;
 				}
 				var type = this.soyParamTypes_[name] || '';
@@ -12860,7 +13972,7 @@ babelHelpers;
     */
 			value: function renderIncDom() {
 				var elementTemplate = this.component_.constructor.TEMPLATE;
-				if (core.isFunction(elementTemplate) && !this.component_.render) {
+				if (isFunction(elementTemplate) && !this.component_.render) {
 					elementTemplate = SoyAop.getOriginalFn(elementTemplate);
 					SoyAop.startInterception(Soy.handleInterceptedCall_);
 					elementTemplate(this.buildTemplateData_(elementTemplate.params || []), null, ijData);
@@ -12882,11 +13994,10 @@ babelHelpers;
 			/**
     * Overrides the original `IncrementalDomRenderer` method so that only
     * state keys used by the main template can cause updates.
-    * @param {!Object} changes
     * @return {boolean}
     */
-			value: function shouldUpdate(changes) {
-				var should = babelHelpers.get(Soy.prototype.__proto__ || Object.getPrototypeOf(Soy.prototype), 'shouldUpdate', this).call(this, changes);
+			value: function shouldUpdate() {
+				var should = babelHelpers.get(Soy.prototype.__proto__ || Object.getPrototypeOf(Soy.prototype), 'shouldUpdate', this).call(this);
 				if (!should || this.component_.shouldUpdate) {
 					return should;
 				}
@@ -12894,7 +14005,7 @@ babelHelpers;
 				var fn = this.component_.constructor.TEMPLATE;
 				var params = fn ? SoyAop.getOriginalFn(fn).params : [];
 				for (var i = 0; i < params.length; i++) {
-					if (changes[params[i]]) {
+					if (this.changes_[params[i]]) {
 						return true;
 					}
 				}
@@ -12917,17 +14028,6 @@ babelHelpers;
 					return goog.loadedModules_[namespace][templateName](opt_data, opt_ignored, opt_ijData);
 				};
 			}
-
-			/**
-    * Handles an intercepted soy template call. If the call is for a component's
-    * main template, then it will be replaced with a call that incremental dom
-    * can use for both handling an instance of that component and rendering it.
-    * @param {!function()} originalFn The original template function that was
-    *     intercepted.
-    * @param {Object} data The data the template was called with.
-    * @protected
-    */
-
 		}, {
 			key: 'handleInterceptedCall_',
 			value: function handleInterceptedCall_(originalFn) {
@@ -12972,10 +14072,10 @@ babelHelpers;
 		}, {
 			key: 'toIncDom',
 			value: function toIncDom(value) {
-				if (core.isObject(value) && core.isString(value.content) && value.contentKind === 'HTML') {
+				if (isObject(value) && isString(value.content) && value.contentKind === 'HTML') {
 					value = value.content;
 				}
-				if (core.isString(value)) {
+				if (isString(value)) {
 					value = HTML2IncDom.buildFn(value);
 				}
 				return value;
@@ -12983,6 +14083,8 @@ babelHelpers;
 		}]);
 		return Soy;
 	}(IncrementalDomRenderer);
+
+	Soy.RENDERER_NAME = 'soy';
 
 	this['metal']['Soy'] = Soy;
 	this['metalNamed']['Soy'] = this['metalNamed']['Soy'] || {};
@@ -13233,6 +14335,8 @@ babelHelpers;
     goog.require('soy.asserts');
     /** @suppress {extraRequire} */
     goog.require('goog.i18n.bidi');
+    /** @suppress {extraRequire} */
+    goog.require('goog.string');
     var IncrementalDom = goog.require('incrementaldom');
     var ie_open = IncrementalDom.elementOpen;
     var ie_close = IncrementalDom.elementClose;
@@ -13255,11 +14359,12 @@ babelHelpers;
      */
     function $render(opt_data, opt_ignored, opt_ijData) {
       opt_data = opt_data || {};
-      soy.asserts.assertType(opt_data.body == null || opt_data.body instanceof Function || opt_data.body instanceof soydata.UnsanitizedText || goog.isString(opt_data.body), 'body', opt_data.body, '?soydata.SanitizedHtml|string|undefined');
+      soy.asserts.assertType(opt_data.body == null || opt_data.body instanceof Function || opt_data.body instanceof goog.soy.data.SanitizedContent || opt_data.body instanceof soydata.UnsanitizedText || goog.isString(opt_data.body), 'body', opt_data.body, '?soydata.SanitizedHtml|string|undefined');
       var body = /** @type {?soydata.SanitizedHtml|string|undefined} */opt_data.body;
       ie_open('div', null, null, 'class', 'alert' + (opt_data.dismissible ? ' alert-dismissible' : '') + (opt_data.elementClasses ? ' ' + opt_data.elementClasses : ''), 'role', 'alert');
       if (body) {
-        body();
+        var dyn0 = body;
+        if (typeof dyn0 == 'function') dyn0();else if (dyn0 != null) itext(dyn0);
       }
       if (opt_data.dismissible) {
         ie_open('button', null, null, 'type', 'button', 'class', 'close', 'aria-label', 'Close', 'data-onclick', 'toggle');
@@ -13276,7 +14381,7 @@ babelHelpers;
     }
 
     exports.render.params = ["body", "dismissible", "elementClasses"];
-    exports.render.types = { "body": "html", "dismissible": "any", "elementClasses": "any" };
+    exports.render.types = { "body": "html|string", "dismissible": "any", "elementClasses": "any" };
     templates = exports;
     return exports;
   });
@@ -13513,9 +14618,7 @@ babelHelpers;
    * The body content of the alert.
    * @type {string}
    */
-		body: {
-			isHtml: true
-		},
+		body: {},
 
 		/**
    * Flag indicating if the alert should be dismissable (closeable).
